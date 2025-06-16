@@ -1,115 +1,72 @@
-import { TutorialStep } from "./tutorial-step";
-import { CodeBlock } from "./code-block";
-
-const create = `create table notes (
-  id bigserial primary key,
-  title text
-);
-
-insert into notes(title)
-values
-  ('Today I created a Supabase project.'),
-  ('I added some data and queried it from Next.js.'),
-  ('It was awesome!');
-`.trim();
-
-const server = `import { createClient } from '@/utils/supabase/server'
-
-export default async function Page() {
-  const supabase = await createClient()
-  const { data: notes } = await supabase.from('notes').select()
-
-  return <pre>{JSON.stringify(notes, null, 2)}</pre>
-}
-`.trim();
-
-const client = `'use client'
-
-import { createClient } from '@/utils/supabase/client'
-import { useEffect, useState } from 'react'
-
-export default function Page() {
-  const [notes, setNotes] = useState<any[] | null>(null)
-  const supabase = createClient()
-
-  useEffect(() => {
-    const getData = async () => {
-      const { data } = await supabase.from('notes').select()
-      setNotes(data)
-    }
-    getData()
-  }, [])
-
-  return <pre>{JSON.stringify(notes, null, 2)}</pre>
-}
-`.trim();
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Code, Database, ExternalLink, Zap } from "lucide-react";
 
 export function FetchDataSteps() {
   return (
-    <ol className="flex flex-col gap-6">
-      <TutorialStep title="Create some tables and insert some data">
-        <p>
-          Head over to the{" "}
-          <a
-            href="https://supabase.com/dashboard/project/_/editor"
-            className="font-bold hover:underline text-foreground/80"
-            target="_blank"
-            rel="noreferrer"
-          >
-            Table Editor
-          </a>{" "}
-          for your Supabase project to create a table and insert some example
-          data. If you&apos;re stuck for creativity, you can copy and paste the
-          following into the{" "}
-          <a
-            href="https://supabase.com/dashboard/project/_/sql/new"
-            className="font-bold hover:underline text-foreground/80"
-            target="_blank"
-            rel="noreferrer"
-          >
-            SQL Editor
-          </a>{" "}
-          and click RUN!
-        </p>
-        <CodeBlock code={create} />
-      </TutorialStep>
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Database className="h-5 w-5" />
+            設置資料庫
+          </CardTitle>
+          <CardDescription>
+            配置 Supabase 資料庫和認證系統
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground mb-4">
+            建立資料表、設置 RLS 政策，並配置認證流程。
+          </p>
+          <Button variant="outline" size="sm" className="w-full">
+            <ExternalLink className="h-4 w-4 mr-2" />
+            查看文檔
+          </Button>
+        </CardContent>
+      </Card>
 
-      <TutorialStep title="Query Supabase data from Next.js">
-        <p>
-          To create a Supabase client and query data from an Async Server
-          Component, create a new page.tsx file at{" "}
-          <span className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-xs font-medium text-secondary-foreground border">
-            /app/notes/page.tsx
-          </span>{" "}
-          and add the following.
-        </p>
-        <CodeBlock code={server} />
-        <p>Alternatively, you can use a Client Component.</p>
-        <CodeBlock code={client} />
-      </TutorialStep>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Code className="h-5 w-5" />
+            API 路由
+          </CardTitle>
+          <CardDescription>
+            建立 Next.js API 路由來處理資料
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground mb-4">
+            使用 App Router 建立 API 端點來處理 CRUD 操作。
+          </p>
+          <Button variant="outline" size="sm" className="w-full">
+            <ExternalLink className="h-4 w-4 mr-2" />
+            範例代碼
+          </Button>
+        </CardContent>
+      </Card>
 
-      <TutorialStep title="Explore the Supabase UI Library">
-        <p>
-          Head over to the{" "}
-          <a
-            href="https://supabase.com/ui"
-            className="font-bold hover:underline text-foreground/80"
-          >
-            Supabase UI library
-          </a>{" "}
-          and try installing some blocks. For example, you can install a
-          Realtime Chat block by running:
-        </p>
-        <CodeBlock
-          code={
-            "npx shadcn@latest add https://supabase.com/ui/r/realtime-chat-nextjs.json"
-          }
-        />
-      </TutorialStep>
-
-      <TutorialStep title="Build in a weekend and scale to millions!">
-        <p>You&apos;re ready to launch your product to the world! 🚀</p>
-      </TutorialStep>
-    </ol>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Zap className="h-5 w-5" />
+            即時更新
+          </CardTitle>
+          <CardDescription>
+            實現即時資料同步功能
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground mb-4">
+            使用 Supabase 的即時訂閱功能來同步資料變更。
+          </p>
+          <Button variant="outline" size="sm" className="w-full">
+            <ExternalLink className="h-4 w-4 mr-2" />
+            了解更多
+          </Button>
+        </CardContent>
+      </Card>
+    </div>
   );
-}
+} 
