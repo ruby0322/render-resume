@@ -29,7 +29,7 @@ export default function TermsPage() {
                 1. 服務條款的接受
               </h2>
               <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
-                歡迎使用 AI 履歷生成器（以下簡稱「本服務」）。本服務條款（以下簡稱「本條款」）是您與我們之間具有法律約束力的協議。
+                歡迎使用 RenderResume 懶得履歷・AI 履歷生成器（以下簡稱「本服務」）。本服務條款（以下簡稱「本條款」）是您與我們之間具有法律約束力的協議。
                 當您註冊帳戶、使用本服務或存取我們的網站時，即表示您同意受本條款約束。
               </p>
             </section>
