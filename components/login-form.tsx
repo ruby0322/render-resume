@@ -27,7 +27,8 @@ export function LoginForm({
     loading, 
     error, 
     clearError,
-    isAuthenticated 
+    isAuthenticated,
+    redirectToDashboard
   } = useAuth();
 
   // 清除錯誤當輸入改變時
@@ -36,6 +37,18 @@ export function LoginForm({
       clearError();
     }
   }, [email, password, clearError]);
+
+  // 當用戶登入成功時自動重定向
+  useEffect(() => {
+    if (isAuthenticated) {
+      // 短暫延遲確保UI顯示成功狀態
+      const timer = setTimeout(() => {
+        redirectToDashboard();
+      }, 1500);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [isAuthenticated, redirectToDashboard]);
 
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -31,7 +31,8 @@ export function SignUpForm({
     loading, 
     error, 
     clearError,
-    isAuthenticated 
+    isAuthenticated,
+    redirectToDashboard
   } = useAuth();
 
   // 清除錯誤當輸入改變時
@@ -41,6 +42,18 @@ export function SignUpForm({
       setLocalError(null);
     }
   }, [email, password, repeatPassword, clearError, error, localError]);
+
+  // 當用戶認證成功時自動重定向（適用於Google OAuth或已經驗證的email註冊）
+  useEffect(() => {
+    if (isAuthenticated) {
+      // 短暫延遲確保UI顯示成功狀態
+      const timer = setTimeout(() => {
+        redirectToDashboard();
+      }, 1500);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [isAuthenticated, redirectToDashboard]);
 
   const handleEmailSignUp = async (e: React.FormEvent) => {
     e.preventDefault();

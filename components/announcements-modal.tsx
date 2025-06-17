@@ -34,6 +34,7 @@ const typeStyles = {
 export function AnnouncementsModal({ open, onOpenChange }: AnnouncementsModalProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<PaginatedAnnouncements>({
     announcements: [],
     totalCount: 0,
@@ -42,11 +43,28 @@ export function AnnouncementsModal({ open, onOpenChange }: AnnouncementsModalPro
 
   const loadAnnouncements = async (page: number) => {
     setLoading(true);
+    setError(null);
     try {
       const result = await getAnnouncementsPaginated(page, 5);
-      setData(result);
+      if (result) {
+        setData(result);
+      } else {
+        // 如果result為null或undefined，設置默認值
+        setData({
+          announcements: [],
+          totalCount: 0,
+          hasMore: false,
+        });
+      }
     } catch (error) {
       console.error('Error loading announcements:', error);
+      setError('載入公告時發生錯誤');
+      // 確保即使出錯也有默認數據結構
+      setData({
+        announcements: [],
+        totalCount: 0,
+        hasMore: false,
+      });
     } finally {
       setLoading(false);
     }
@@ -58,7 +76,8 @@ export function AnnouncementsModal({ open, onOpenChange }: AnnouncementsModalPro
     }
   }, [open, currentPage]);
 
-  const totalPages = Math.ceil(data.totalCount / 5);
+  // 安全的計算總頁數，確保data存在且totalCount是數字
+  const totalPages = Math.ceil((data?.totalCount || 0) / 5);
 
   const handlePrevPage = () => {
     if (currentPage > 1) {
@@ -79,7 +98,7 @@ export function AnnouncementsModal({ open, onOpenChange }: AnnouncementsModalPro
           <DialogTitle className="flex items-center gap-2 flex-wrap">
             📢 系統公告
             <span className="text-sm font-normal text-muted-foreground">
-              (共 {data.totalCount} 則)
+              (共 {data?.totalCount || 0} 則)
             </span>
           </DialogTitle>
         </DialogHeader>
@@ -89,7 +108,20 @@ export function AnnouncementsModal({ open, onOpenChange }: AnnouncementsModalPro
             <div className="flex items-center justify-center py-8">
               <div className="w-6 h-6 border-2 border-cyan-200 border-t-cyan-600 rounded-full animate-spin"></div>
             </div>
-          ) : data.announcements.length === 0 ? (
+          ) : error ? (
+            <div className="text-center py-8 text-red-500 dark:text-red-400">
+              {error}
+              <div className="mt-4">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => loadAnnouncements(currentPage)}
+                >
+                  重試
+                </Button>
+              </div>
+            </div>
+          ) : !data || data.announcements.length === 0 ? (
             <div className="text-center py-8 text-gray-500 dark:text-gray-400">
               目前沒有公告
             </div>

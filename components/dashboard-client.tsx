@@ -1,5 +1,6 @@
 "use client";
 
+import { LogoutRedirectHandler } from "@/components/logout-redirect-handler";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileText, Plus, Upload, User } from "lucide-react";
@@ -8,6 +9,8 @@ import Link from "next/link";
 export function DashboardClient() {
   return (
     <>
+      <LogoutRedirectHandler />
+      
       {/* Quick Actions */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
         <Card className="hover:shadow-lg transition-shadow cursor-pointer">

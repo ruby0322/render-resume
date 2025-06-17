@@ -53,26 +53,11 @@ export function useAuth() {
           loading: false,
           error: null,
         });
-
-        // 根據認證事件進行導航（僅在特定情況下）
-        if (event === 'SIGNED_IN' && session?.user) {
-          // 如果在認證頁面，導航到儀表板
-          const currentPath = window.location.pathname;
-          if (currentPath.startsWith('/auth/')) {
-            router.push('/dashboard');
-          }
-        } else if (event === 'SIGNED_OUT') {
-          // 登出時導航到首頁（如果不在首頁或認證頁面）
-          const currentPath = window.location.pathname;
-          if (!currentPath.startsWith('/auth/') && currentPath !== '/') {
-            router.push('/');
-          }
-        }
       }
     );
 
     return () => subscription.unsubscribe();
-  }, [supabase, router]);
+  }, [supabase]);
 
   // 電子郵件密碼登入
   const signInWithEmail = async (email: string, password: string) => {
@@ -216,6 +201,15 @@ export function useAuth() {
     setAuthState(prev => ({ ...prev, error: null }));
   };
 
+  // 手動重定向方法
+  const redirectToDashboard = () => {
+    router.push('/dashboard');
+  };
+
+  const redirectToHome = () => {
+    router.push('/');
+  };
+
   return {
     user: authState.user,
     loading: authState.loading,
@@ -227,5 +221,7 @@ export function useAuth() {
     signOut,
     resetPassword,
     clearError,
+    redirectToDashboard,
+    redirectToHome,
   };
 } 
