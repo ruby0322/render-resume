@@ -239,6 +239,29 @@ export function SignUpForm({
                 </div>
               )}
 
+              {/* Terms and Privacy Agreement */}
+              <div className="text-sm text-gray-600 dark:text-gray-400 text-center">
+                點擊「註冊」即表示您同意我們的{" "}
+                <Link
+                  href="/terms"
+                  className="text-cyan-600 hover:text-cyan-700 underline underline-offset-4"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  服務條款
+                </Link>
+                {" "}和{" "}
+                <Link
+                  href="/privacy"
+                  className="text-cyan-600 hover:text-cyan-700 underline underline-offset-4"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  隱私權政策
+                </Link>
+                。
+              </div>
+
               {/* Submit Button */}
               <Button 
                 type="submit" 

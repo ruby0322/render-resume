@@ -3,11 +3,11 @@
 import { useAuth } from "@/components/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -211,6 +211,22 @@ export function LoginForm({
                 className="text-cyan-600 hover:text-cyan-700 underline underline-offset-4"
               >
                 立即註冊
+              </Link>
+            </div>
+
+            {/* Terms and Privacy Links */}
+            <div className="mt-3 text-center text-xs space-x-4">
+              <Link
+                href="/terms"
+                className="text-gray-500 hover:text-cyan-600 underline underline-offset-4"
+              >
+                服務條款
+              </Link>
+              <Link
+                href="/privacy"
+                className="text-gray-500 hover:text-cyan-600 underline underline-offset-4"
+              >
+                隱私權政策
               </Link>
             </div>
           </form>
