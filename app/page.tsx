@@ -1,10 +1,10 @@
 import { Button } from "@/components/ui/button";
 import {
-  Brain,
-  Eye,
-  FileText,
-  MessageSquare,
-  Upload
+    Brain,
+    Eye,
+    FileText,
+    MessageSquare,
+    Upload
 } from "lucide-react";
 import Link from "next/link";
 
@@ -44,16 +44,18 @@ export default function Home() {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <Link href="/upload">
+            <Link href="/auth/sign-up">
               <Button size="lg" className="bg-cyan-600 hover:bg-cyan-700 text-white px-8 py-3 text-lg">
-                開始創建履歷
+                免費開始使用
                 <Upload className="ml-2 h-5 w-5" />
               </Button>
             </Link>
-            <Button variant="outline" size="lg" className="px-8 py-3 text-lg border-cyan-200 text-cyan-700 hover:bg-cyan-50 dark:border-cyan-800 dark:text-cyan-300 dark:hover:bg-cyan-950">
-              查看範例
-              <Eye className="ml-2 h-5 w-5" />
-            </Button>
+            <Link href="/auth/login">
+              <Button variant="outline" size="lg" className="px-8 py-3 text-lg border-cyan-200 text-cyan-700 hover:bg-cyan-50 dark:border-cyan-800 dark:text-cyan-300 dark:hover:bg-cyan-950">
+                已有帳戶？登入
+                <Eye className="ml-2 h-5 w-5" />
+              </Button>
+            </Link>
           </div>
 
           {/* Stats */}
@@ -88,24 +90,30 @@ export default function Home() {
               {[
                 {
                   step: "01",
-                  title: "上傳作品",
-                  description: "拖拽上傳作品說明文件、截圖或簡短文字說明",
+                  title: "註冊帳戶",
+                  description: "創建免費帳戶，開始您的 AI 履歷生成之旅",
                   icon: FileText
                 },
                 {
-                  step: "02", 
+                  step: "02",
+                  title: "上傳作品",
+                  description: "拖拽上傳作品說明文件、截圖或簡短文字說明",
+                  icon: Upload
+                },
+                {
+                  step: "03", 
                   title: "AI智能解析",
                   description: "AI 自動分析您的作品內容，識別技能和成就",
                   icon: Brain
                 },
                 {
-                  step: "03",
+                  step: "04",
                   title: "智慧問答與優化",
                   description: "AI 問答收集補充信息，並提供個性化優化建議",
                   icon: MessageSquare
                 },
                 {
-                  step: "04",
+                  step: "05",
                   title: "預覽下載",
                   description: "預覽最終結果，下載專業的履歷和作品集",
                   icon: Eye
@@ -142,13 +150,20 @@ export default function Home() {
             準備好開始了嗎？
           </h2>
           <p className="text-gray-600 dark:text-gray-300 mb-8">
-            立即上傳您的作品，讓AI為您打造專業履歷
+            註冊免費帳戶，立即體驗 AI 履歷生成服務
           </p>
-          <Link href="/upload">
-            <Button size="lg" className="bg-cyan-600 hover:bg-cyan-700 text-white px-8 py-3 text-lg">
-              免費開始
-            </Button>
-          </Link>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+            <Link href="/auth/sign-up">
+              <Button size="lg" className="bg-cyan-600 hover:bg-cyan-700 text-white px-8 py-3 text-lg">
+                免費註冊
+              </Button>
+            </Link>
+            <Link href="/auth/login">
+              <Button variant="outline" size="lg" className="px-8 py-3 text-lg border-gray-300 text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800">
+                已有帳戶？登入
+              </Button>
+            </Link>
+          </div>
         </div>
       </section>
     </div>

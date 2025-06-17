@@ -10,8 +10,8 @@ const defaultUrl = process.env.VERCEL_URL
 
 export const metadata: Metadata = {
   metadataBase: new URL(defaultUrl),
-  title: "WizResume - AI 履歷生成器",
-  description: "讓AI為您打造專業履歷和作品集",
+  title: "RenderResume - AI 履歷生成器",
+  description: "讓 AI 為您打造專業履歷和作品集",
 };
 
 const geistSans = Geist({

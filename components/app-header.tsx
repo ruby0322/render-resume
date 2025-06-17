@@ -1,11 +1,14 @@
 "use client";
 
-import { ThemeSwitcher } from "@/components/theme-switcher";
+import { useAuth } from "@/components/hooks/use-auth";
+import { Button } from "@/components/ui/button";
+import { User } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const AppHeader = () => {
   const pathname = usePathname();
+  const { user, isAuthenticated, signOut, loading } = useAuth();
   
   // 計算進度
   const getProgress = () => {
@@ -34,6 +37,14 @@ const AppHeader = () => {
 
   const progress = getProgress();
   const stepName = getStepName();
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+    } catch (error) {
+      console.error('登出失敗:', error);
+    }
+  };
 
   return (
     <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
@@ -74,9 +85,38 @@ const AppHeader = () => {
             </div>
           )}
 
-          {/* Theme Switcher */}
-          <div className="flex items-center space-x-2">
-            <ThemeSwitcher />
+          {/* Auth Section & Theme Switcher */}
+          <div className="flex items-center space-x-4">
+            {loading ? (
+              <div className="w-6 h-6 border-2 border-gray-300 border-t-cyan-600 rounded-full animate-spin"></div>
+            ) : isAuthenticated && user ? (
+              <>
+                <div className="flex items-center space-x-2">
+                  <User className="h-4 w-4 text-gray-500" />
+                  <span className="text-sm text-gray-700 dark:text-gray-300 hidden sm:inline">
+                    {user.email}
+                  </span>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleSignOut}
+                  className="border-gray-300 text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800"
+                >
+                  登出
+                </Button>
+              </>
+            ) : (
+              <div className="flex items-center space-x-2">
+                <Button asChild size="sm" variant="outline">
+                  <Link href="/auth/login">登入</Link>
+                </Button>
+                <Button asChild size="sm" className="bg-cyan-600 hover:bg-cyan-700">
+                  <Link href="/auth/sign-up">註冊</Link>
+                </Button>
+              </div>
+            )}
+            {/* <ThemeSwitcher /> */}
           </div>
         </div>
       </div>

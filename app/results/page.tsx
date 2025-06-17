@@ -1,15 +1,19 @@
 "use client";
 
+import { AnalysisScores } from "@/components/analysis-scores";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import type { ResumeAnalysisResult } from "@/lib/types/resume-analysis";
+import type { AnalysisScore, LetterGrade, ResumeAnalysisResult } from "@/lib/types/resume-analysis";
 import {
   ArrowLeft,
   Award,
+  BarChart3,
   Briefcase,
   Code,
   Download,
+  Eye,
   FileText,
+  GraduationCap,
   Share2,
   User
 } from "lucide-react";
@@ -20,6 +24,8 @@ export default function ResultsPage() {
   const router = useRouter();
   const [analysisResult, setAnalysisResult] = useState<ResumeAnalysisResult | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [showAnalysisReport, setShowAnalysisReport] = useState(false);
+  const [isLoadingAnalysis, setIsLoadingAnalysis] = useState(false);
 
   useEffect(() => {
     // 從 sessionStorage 讀取分析結果
@@ -40,13 +46,96 @@ export default function ResultsPage() {
     setIsLoading(false);
   }, [router]);
 
-  // 計算技能聯集：從項目的 technologies 和 expertise 合併
+  // Helper function to extract all skills
   const allSkills = React.useMemo(() => {
     if (!analysisResult) return [];
-    const projectTechnologies = analysisResult.projects.flatMap(project => project.technologies);
-    const allSkillsSet = new Set([...projectTechnologies, ...analysisResult.expertise]);
-    return Array.from(allSkillsSet);
+    const skills: string[] = [];
+    analysisResult.projects.forEach(p => {
+      if (p.technologies) skills.push(...p.technologies);
+    });
+    analysisResult.work_experiences.forEach(w => {
+      if (w.technologies) skills.push(...w.technologies);
+    });
+    return [...new Set(skills)];
   }, [analysisResult]);
+
+  // 生成預設評分（如果API沒有回傳scores）
+  const analysisScores: AnalysisScore[] = React.useMemo(() => {
+    if (!analysisResult) return [];
+    
+    // 如果API有回傳scores，直接使用
+    if (analysisResult.scores && analysisResult.scores.length > 0) {
+      return analysisResult.scores;
+    }
+    
+    // Helper function to convert numerical score to letter grade
+    const numberToGrade = (score: number): LetterGrade => {
+      if (score >= 95) return 'A+';
+      if (score >= 90) return 'A';
+      if (score >= 85) return 'A-';
+      if (score >= 80) return 'B+';
+      if (score >= 75) return 'B';
+      if (score >= 70) return 'B-';
+      if (score >= 60) return 'C+';
+      if (score >= 50) return 'C';
+      if (score >= 40) return 'C-';
+      return 'F';
+    };
+    
+    // 如果沒有scores，基於現有數據生成評分
+    const scores: AnalysisScore[] = [
+      {
+        category: "技術深度與廣度",
+        grade: numberToGrade(60 + Math.min(40, allSkills.length * 2)),
+        description: "技術技能的深度與廣度評估",
+        comment: `技能覆蓋度${allSkills.length >= 15 ? '優秀' : allSkills.length >= 10 ? '良好' : '需要加強'}，包含${allSkills.length}項技術技能`,
+        icon: "🛠️",
+        suggestions: allSkills.length < 10 ? ["建議增加更多相關技術技能", "可以按熟練程度分類展示"] : ["技能覆蓋全面，建議突出核心專長"]
+      },
+      {
+        category: "項目複雜度與影響力",
+        grade: numberToGrade(50 + analysisResult.projects.length * 15),
+        description: "項目經驗的複雜度與影響力",
+        comment: `項目經驗${analysisResult.projects.length >= 3 ? '豐富' : '有待加強'}，共${analysisResult.projects.length}個項目`,
+        icon: "🚀",
+        suggestions: analysisResult.projects.length < 3 ? ["建議增加更多項目經驗", "詳述技術挑戰和解決方案"] : ["項目經驗豐富，建議加入量化數據"]
+      },
+      {
+        category: "專業經驗完整度",
+        grade: numberToGrade(55 + analysisResult.work_experiences.length * 20),
+        description: "工作經驗的完整性與相關性",
+        comment: `工作經驗${analysisResult.work_experiences.length >= 2 ? '完整' : '需要補強'}，共${analysisResult.work_experiences.length}段經歷`,
+        icon: "💼",
+        suggestions: analysisResult.work_experiences.length < 2 ? ["建議補充更多工作經驗", "突出核心職責"] : ["經驗豐富，建議量化工作成果"]
+      },
+      {
+        category: "教育背景與專業匹配度",
+        grade: numberToGrade(50 + analysisResult.education_background.length * 25),
+        description: "學歷與專業領域的相關性",
+        comment: `教育背景${analysisResult.education_background.length >= 1 ? '完整' : '需要補充'}，共${analysisResult.education_background.length}個學歷`,
+        icon: "🎓",
+        suggestions: analysisResult.education_background.length < 1 ? ["建議補充教育背景", "加入相關課程和成就"] : ["教育背景良好，建議突出相關課程"]
+      },
+      {
+        category: "成就與驗證",
+        grade: numberToGrade(40 + analysisResult.achievements.length * 10),
+        description: "具體成就與第三方驗證",
+        comment: `成就展示${analysisResult.achievements.length >= 5 ? '充分' : '有待加強'}，共${analysisResult.achievements.length}項成就`,
+        icon: "🏆",
+        suggestions: analysisResult.achievements.length < 5 ? ["建議增加量化成果", "加入客戶推薦或認證"] : ["成就豐富，建議突出核心亮點"]
+      },
+      {
+        category: "整體專業形象",
+        grade: numberToGrade(65 + (analysisResult.projects.length + analysisResult.work_experiences.length + analysisResult.education_background.length) * 3),
+        description: "履歷整體專業形象與表達",
+        comment: "履歷結構清晰，專業形象良好",
+        icon: "👤",
+        suggestions: ["建議加強個人品牌描述", "可以考慮加入職涯目標"]
+      }
+    ];
+    
+    return scores;
+  }, [analysisResult, allSkills]);
 
   const handleExportJSON = () => {
     if (!analysisResult) return;
@@ -100,6 +189,22 @@ export default function ResultsPage() {
     router.push('/upload');
   };
 
+  const handleViewAnalysisReport = () => {
+    setIsLoadingAnalysis(true);
+    setTimeout(() => {
+      setShowAnalysisReport(true);
+      setIsLoadingAnalysis(false);
+      // 自動滾動到頁面頂部
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, 500);
+  };
+
+  const handleBackToResults = () => {
+    setShowAnalysisReport(false);
+    // 自動滾動到頁面頂部
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-white dark:bg-gray-900 flex items-center justify-center">
@@ -124,24 +229,95 @@ export default function ResultsPage() {
     );
   }
 
+  // 顯示分析載入畫面
+  if (isLoadingAnalysis) {
+    return (
+      <div className="min-h-screen bg-white dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="relative">
+            <div className="animate-spin rounded-full h-16 w-16 border-4 border-cyan-200 border-t-cyan-600 mx-auto mb-6"></div>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <BarChart3 className="h-6 w-6 text-cyan-600 animate-pulse" />
+            </div>
+          </div>
+          <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+            正在生成分析報告
+          </h3>
+          <p className="text-gray-600 dark:text-gray-300">
+            AI 正在深度分析您的履歷內容...
+          </p>
+          <div className="mt-4 flex justify-center">
+            <div className="flex space-x-1">
+              <div className="w-2 h-2 bg-cyan-600 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+              <div className="w-2 h-2 bg-cyan-600 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+              <div className="w-2 h-2 bg-cyan-600 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // 顯示分析報告（第二步）
+  if (showAnalysisReport) {
+    return (
+      <div className="min-h-screen bg-white dark:bg-gray-900 py-8">
+        <div className="container mx-auto px-4 max-w-6xl">
+          {/* 分析評分組件 */}
+          <div className="mb-12">
+            <AnalysisScores scores={analysisScores} />
+          </div>
+
+          {/* Bottom Actions */}
+          <div className="flex justify-between items-center mt-12 pt-8 border-t border-gray-200 dark:border-gray-700">
+            <Button 
+              variant="outline" 
+              onClick={handleBackToResults}
+              className="flex items-center"
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              返回辨識結果
+            </Button>
+            
+            <Button 
+              onClick={handleNewAnalysis}
+              className="bg-cyan-600 hover:bg-cyan-700 text-white"
+            >
+              開始新的分析
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // 顯示辨識結果（第一步）
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900 py-8">
       <div className="container mx-auto px-4 max-w-6xl">
-        {/* Header */}
+        
+        {/* Analysis Results Header */}
         <div className="text-center mb-8">
           <div className="flex justify-center mb-4">
-            <span className="text-5xl">📊</span>
+            <span className="text-4xl">📋</span>
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
-            履歷分析結果
-          </h1>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">
+            履歷內容辨識結果
+          </h2>
           <p className="text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
-            AI 已完成對您履歷的深度分析，以下是詳細的分析結果。
+            AI 從您的履歷中提取和分析的詳細內容資訊
           </p>
         </div>
 
         {/* Action Buttons */}
         <div className="flex flex-wrap justify-center gap-4 mb-8">
+          <Button
+            onClick={handleViewAnalysisReport}
+            className="bg-cyan-600 hover:bg-cyan-700 text-white flex items-center px-6 py-3 text-lg"
+          >
+            <BarChart3 className="h-5 w-5 mr-2" />
+            查看分析評分報告
+          </Button>
           <Button
             onClick={handleExportJSON}
             variant="outline"
@@ -160,7 +336,8 @@ export default function ResultsPage() {
           </Button>
           <Button
             onClick={handleNewAnalysis}
-            className="bg-cyan-600 hover:bg-cyan-700 text-white"
+            variant="outline"
+            className="flex items-center"
           >
             <FileText className="h-4 w-4 mr-2" />
             新增分析
@@ -168,7 +345,17 @@ export default function ResultsPage() {
         </div>
 
         {/* Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+          <Card className="bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800">
+            <CardContent className="p-6 text-center">
+              <GraduationCap className="h-8 w-8 text-blue-600 dark:text-blue-400 mx-auto mb-2" />
+              <h3 className="text-2xl font-bold text-blue-700 dark:text-blue-400">
+                {analysisResult.education_background.length}
+              </h3>
+              <p className="text-sm text-blue-600 dark:text-blue-300">個學歷</p>
+            </CardContent>
+          </Card>
+          
           <Card className="bg-purple-50 dark:bg-purple-950/30 border-purple-200 dark:border-purple-800">
             <CardContent className="p-6 text-center">
               <User className="h-8 w-8 text-purple-600 dark:text-purple-400 mx-auto mb-2" />
@@ -199,20 +386,97 @@ export default function ResultsPage() {
             </CardContent>
           </Card>
           
-          <Card className="bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800">
+          <Card className="bg-cyan-50 dark:bg-cyan-950/30 border-cyan-200 dark:border-cyan-800">
             <CardContent className="p-6 text-center">
-              <Code className="h-8 w-8 text-blue-600 dark:text-blue-400 mx-auto mb-2" />
-              <h3 className="text-2xl font-bold text-blue-700 dark:text-blue-400">
+              <Code className="h-8 w-8 text-cyan-600 dark:text-cyan-400 mx-auto mb-2" />
+              <h3 className="text-2xl font-bold text-cyan-700 dark:text-cyan-400">
                 {allSkills.length}
               </h3>
-              <p className="text-sm text-blue-600 dark:text-blue-300">項技能</p>
+              <p className="text-sm text-cyan-600 dark:text-cyan-300">項技能</p>
             </CardContent>
           </Card>
         </div>
 
         {/* Detailed Results */}
         <div className="space-y-8">
-          {/* Work Experience Section - 第一個 */}
+          {/* Education Background Section - 第一個 */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center text-xl">
+                <GraduationCap className="h-6 w-6 mr-2 text-blue-600" />
+                教育背景
+              </CardTitle>
+              <CardDescription>{analysisResult.education_summary}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {analysisResult.education_background.length > 0 ? (
+                <div className="space-y-6">
+                  {analysisResult.education_background.map((edu, index) => (
+                    <div key={index} className="border-l-4 border-blue-500 pl-6 py-4 bg-gray-50 dark:bg-gray-800 rounded-r-lg">
+                      <div className="flex justify-between items-start mb-2">
+                        <div>
+                          <h4 className="text-lg font-semibold text-gray-900 dark:text-white">
+                            {edu.degree} - {edu.major}
+                          </h4>
+                          <p className="text-blue-600 dark:text-blue-400 font-medium">
+                            {edu.institution}
+                          </p>
+                        </div>
+                        <span className="text-sm text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-700 px-3 py-1 rounded">
+                          {edu.duration}
+                        </span>
+                      </div>
+                      {edu.gpa && (
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                          GPA: {edu.gpa}
+                        </p>
+                      )}
+                      {edu.courses && edu.courses.length > 0 && (
+                        <div className="mb-3">
+                          <span className="text-sm font-medium text-gray-600 dark:text-gray-400">相關課程：</span>
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {edu.courses.map((course, courseIndex) => (
+                              <span
+                                key={courseIndex}
+                                className="px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded text-xs"
+                              >
+                                {course}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {edu.achievements && edu.achievements.length > 0 && (
+                        <div>
+                          <span className="text-sm font-medium text-gray-600 dark:text-gray-400">學術成就：</span>
+                          <ul className="mt-1 text-sm text-gray-700 dark:text-gray-300">
+                            {edu.achievements.map((achievement, achIndex) => (
+                              <li key={achIndex} className="flex items-start mt-1">
+                                <span className="text-blue-500 mr-2">•</span>
+                                {achievement}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                  <div className="text-gray-400 dark:text-gray-500 mb-2">
+                    <GraduationCap className="h-12 w-12 mx-auto opacity-50" />
+                  </div>
+                  <p className="text-gray-600 dark:text-gray-400 font-medium mb-1">未提取到教育背景</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-500">
+                    AI無法從您的履歷中識別出教育背景資訊
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Work Experience Section - 第二個 */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center text-xl">
@@ -239,9 +503,33 @@ export default function ResultsPage() {
                           {exp.duration}
                         </span>
                       </div>
-                      <p className="text-gray-700 dark:text-gray-300">
+                      <p className="text-gray-700 dark:text-gray-300 mb-3">
                         {exp.description}
                       </p>
+                      {/* 新增技術棧與貢獻區塊 */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                        {exp.technologies && exp.technologies.length > 0 && (
+                          <div>
+                            <span className="font-medium text-gray-600 dark:text-gray-400">技術棧：</span>
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              {exp.technologies.map((tech, techIndex) => (
+                                <span
+                                  key={techIndex}
+                                  className="px-2 py-1 bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 rounded text-xs"
+                                >
+                                  {tech}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        {exp.contribution && (
+                          <div>
+                            <span className="font-medium text-gray-600 dark:text-gray-400">主要貢獻：</span>
+                            <p className="text-gray-800 dark:text-gray-200 mt-1">{exp.contribution}</p>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -259,7 +547,7 @@ export default function ResultsPage() {
             </CardContent>
           </Card>
 
-          {/* Projects Section - 第二個 */}
+          {/* Projects Section - 第三個 */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center text-xl">
@@ -290,7 +578,7 @@ export default function ResultsPage() {
                         <div>
                           <span className="font-medium text-gray-600 dark:text-gray-400">技術棧</span>
                           <div className="flex flex-wrap gap-1 mt-1">
-                            {project.technologies.map((tech, techIndex) => (
+                            {project.technologies && project.technologies.map((tech, techIndex) => (
                               <span
                                 key={techIndex}
                                 className="px-2 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded text-xs"
@@ -326,7 +614,7 @@ export default function ResultsPage() {
             </CardContent>
           </Card>
 
-          {/* Achievements Section - 第三個 */}
+          {/* Achievements Section - 第四個 */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center text-xl">
@@ -363,11 +651,11 @@ export default function ResultsPage() {
             </CardContent>
           </Card>
 
-          {/* Skills Section - 第四個 */}
+          {/* Skills Section - 第五個 */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center text-xl">
-                <Code className="h-6 w-6 mr-2 text-blue-600" />
+                <Code className="h-6 w-6 mr-2 text-green-600" />
                 技能分析
               </CardTitle>
               <CardDescription>
@@ -380,7 +668,7 @@ export default function ResultsPage() {
                   {allSkills.map((skill, index) => (
                     <span
                       key={index}
-                      className="px-4 py-2 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full font-medium"
+                      className="px-4 py-2 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded-full font-medium"
                     >
                       {skill}
                     </span>
@@ -412,12 +700,21 @@ export default function ResultsPage() {
             返回分析
           </Button>
           
-          <Button 
-            onClick={handleNewAnalysis}
-            className="bg-cyan-600 hover:bg-cyan-700 text-white"
-          >
-            開始新的分析
-          </Button>
+          <div className="flex gap-4">
+            <Button 
+              onClick={handleViewAnalysisReport}
+              className="bg-cyan-600 hover:bg-cyan-700 text-white flex items-center"
+            >
+              <Eye className="h-4 w-4 mr-2" />
+              查看分析評分
+            </Button>
+            <Button 
+              onClick={handleNewAnalysis}
+              variant="outline"
+            >
+              開始新的分析
+            </Button>
+          </div>
         </div>
       </div>
     </div>

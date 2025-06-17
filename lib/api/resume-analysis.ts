@@ -181,15 +181,15 @@ export async function customPromptAnalysis(options: CustomPromptOptions): Promis
  * 批次分析多個履歷
  */
 export async function batchAnalyzeResumes(options: BatchAnalysisOptions): Promise<BatchAnalysisResult> {
-    const { resumes, additionalTexts } = options;
+    const { resumes } = options;
 
     if (!resumes || resumes.length === 0) {
         throw new Error('履歷列表不能為空');
     }
 
     const results: BatchAnalysisResult = {
-        results: [],
-        errors: [],
+        successful: [],
+        failed: [],
         summary: {
             total: resumes.length,
             successful: 0,
@@ -198,20 +198,19 @@ export async function batchAnalyzeResumes(options: BatchAnalysisOptions): Promis
     };
 
     // 並行處理所有履歷
-    const promises = resumes.map(async (resume, index) => {
+    const promises = resumes.map(async (resume) => {
         try {
-            const additionalText = additionalTexts?.[index];
-            const response = await analyzeResume({ resume, text: additionalText });
+            const response = await analyzeResume({ resume });
             
             if (response.success && response.data) {
-                results.results[index] = response.data;
+                results.successful.push(response.data);
                 results.summary.successful++;
             } else {
                 throw new Error(response.error || '分析失敗');
             }
         } catch (error) {
-            results.errors.push({
-                index,
+            results.failed.push({
+                resume: resume.substring(0, 100) + '...',
                 error: error instanceof Error ? error.message : '未知錯誤'
             });
             results.summary.failed++;

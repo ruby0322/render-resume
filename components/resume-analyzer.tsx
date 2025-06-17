@@ -202,6 +202,29 @@ export default function ResumeAnalyzer() {
                                         <span className="text-xs text-gray-500">{exp.duration}</span>
                                     </div>
                                     <p className="text-sm text-gray-700 mt-2">{exp.description}</p>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm mt-3">
+                                        {exp.technologies && exp.technologies.length > 0 && (
+                                            <div>
+                                                <span className="font-medium text-gray-600">技術棧：</span>
+                                                <div className="flex flex-wrap gap-1 mt-1">
+                                                    {exp.technologies.map((tech, techIndex) => (
+                                                        <span
+                                                            key={techIndex}
+                                                            className="px-2 py-1 bg-green-100 text-green-800 rounded text-xs"
+                                                        >
+                                                            {tech}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+                                        {exp.contribution && (
+                                            <div>
+                                                <span className="font-medium text-gray-600">主要貢獻：</span>
+                                                <p className="text-gray-800 mt-1 text-xs">{exp.contribution}</p>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             ))}
                         </div>

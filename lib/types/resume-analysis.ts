@@ -14,6 +14,30 @@ export interface WorkExperience {
     position: string;
     duration: string;
     description: string;
+    contribution?: string;
+    technologies?: string[];
+}
+
+export interface EducationBackground {
+    institution: string;
+    degree: string;
+    major: string;
+    duration: string;
+    gpa?: string;
+    courses?: string[];
+    achievements?: string[];
+}
+
+// Define letter grade type
+export type LetterGrade = 'A+' | 'A' | 'A-' | 'B+' | 'B' | 'B-' | 'C+' | 'C' | 'C-' | 'F';
+
+export interface AnalysisScore {
+    category: string;
+    grade: LetterGrade;
+    description: string;
+    comment: string;
+    icon: string;
+    suggestions: string[];
 }
 
 export interface ResumeAnalysisResult {
@@ -23,8 +47,11 @@ export interface ResumeAnalysisResult {
     expertise_summary: string;
     work_experiences: WorkExperience[];
     work_experiences_summary: string;
+    education_background: EducationBackground[];
+    education_summary: string;
     achievements: string[];
     achievements_summary: string;
+    scores?: AnalysisScore[];
 }
 
 // 文檔上傳相關類型

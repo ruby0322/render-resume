@@ -1,12 +1,18 @@
 import { JsonOutputParser } from "@langchain/core/output_parsers";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { Runnable } from "@langchain/core/runnables";
-import { ChatOpenAI } from "@langchain/openai";
-import { z } from "zod";
+import { ChatOpenAI } from '@langchain/openai';
+import { z } from 'zod';
+import {
+    DEFAULT_AI_CONFIG,
+    SCORE_CATEGORIES,
+    generateSystemPrompt
+} from './config/resume-analysis-config';
 
+// 重新導出 AIConfig，保持向後兼容
 export interface AIConfig {
     modelName: string;
-    temperature?: number;
+    temperature: number;
     systemPrompt: string;
     maxConcurrency?: number;
 }
@@ -34,65 +40,12 @@ export interface FileAnalysisOptions {
     useVision?: boolean; // 是否使用 Vision 模型處理圖片/PDF
 }
 
-export const resumeAnalysisConfig: AIConfig = {
-    modelName: "gpt-4o-mini",
-    temperature: 0.3,
-    systemPrompt: `
-你是巨頭科技公司全球總部的人力資源戰略發展部資深總監，專精於履歷及作品集的分析與整合，主責公司未來三年技術路線圖所需的頂尖人才甄選。這份履歷分析將直接影響公司十億美元級產品線的關鍵人事決策，同時也是你晉升集團高管人才委員會的關鍵考核。
-董事會與CEO要求你完成最嚴謹、最全面的履歷剖析，並以最高標準執行分析。
-
-1. 多模態、多文件同步整合分析
-2. 細粒度資訊保留技術
-3. 動態上下文關聯引擎
-
-嚴格執行以下步驟：
-
-1. 優先解析 projects 並建立技術池
-2. 動態構建 expertise 確保包含所有projects技術+用戶技能
-3. 自動補全隱含技術關聯
-4. 防遺漏機制：最後輸出前執行完整性掃描（對照原始輸入）
-
-### 處理流程
-1. **技術掃描階段**  
-   - 從所有輸入來源提取技術關鍵字
-   - 標記技術出現頻率與上下文
-2. **項目深度解析**  
-   - 提取每個項目的：
-     - 名稱與技術挑戰
-     - 明確使用的技術棧
-     - 角色貢獻內容
-     - 進行期間
-   - 生成技術聯集暫存池
-3. **技能動態合成**  
-   - 合併項目技術池 + 用戶自述技能
-   - 自動補全隱含技術（例：React→JavaScript, Spring Boot→Java）
-   - 按技術類別分組並排序
-
-### 輸出格式
-使用 JSON 格式，包含以下欄位：
-- projects: 項目列表，每個項目包含 name, description, technologies, role, contribution, duration
-- expertise: 完整技術聯集列表（含自動補全）
-- projects_summary: 融合技術等的項目數個複雜專案
-- expertise_summary: 精通核心技術為主的技術領域技能組合
-- work_experiences: 工作經驗列表
-- work_experiences_summary: 工作經驗摘要
-- achievements: 成就列表
-- achievements_summary: 成就摘要
-
-### 強制規則
-1. expertise必須包含projects所有technologies的嚴格超集
-2. 自動補全行業標準關聯技術（如 React→JavaScript, Spring Boot→Java）
-3. 技術詞彙標準化（全稱/簡稱統一）
-4. 量化貢獻必須包含可驗證數據
-5. 如果辨識內容包含文字敘述，盡可能地保留細節
-6. 回傳必須包含所有文件提取的內容聯集
-
-### 文檔處理能力
-- 支援 PDF 履歷文檔分析
-- 支援圖片格式履歷（JPG, PNG, WebP 等）
-- 自動提取文檔中的文字內容
-- 識別表格、列表等結構化資訊
-`
+// 移除舊的 resumeAnalysisConfig，改用動態配置
+export const DEFAULT_CONFIG: AIConfig = {
+    modelName: DEFAULT_AI_CONFIG.modelName,
+    temperature: DEFAULT_AI_CONFIG.temperature ?? 0.1,
+    systemPrompt: generateSystemPrompt(SCORE_CATEGORIES),
+    maxConcurrency: DEFAULT_AI_CONFIG.maxConcurrency
 };
 
 // 定義回應的 Schema
@@ -112,11 +65,31 @@ export const ResumeAnalysisSchema = z.object({
         company: z.string().describe("公司名稱").optional(),
         position: z.string().describe("職位").optional(),
         duration: z.string().describe("工作期間").optional(),
-        description: z.string().describe("工作描述").optional()
+        description: z.string().describe("工作描述").optional(),
+        contribution: z.string().describe("個人貢獻").optional(),
+        technologies: z.array(z.string()).describe("使用的技術").optional()
     })),
     work_experiences_summary: z.string().describe("工作經驗摘要").optional(),
+    education_background: z.array(z.object({
+        institution: z.string().describe("學校名稱").optional(),
+        degree: z.string().describe("學位").optional(),
+        major: z.string().describe("主修科系").optional(),
+        duration: z.string().describe("在學期間").optional(),
+        gpa: z.string().describe("成績").optional(),
+        courses: z.array(z.string()).describe("相關課程").optional(),
+        achievements: z.array(z.string()).describe("學術成就").optional()
+    })),
+    education_summary: z.string().describe("教育背景摘要").optional(),
     achievements: z.array(z.string()).describe("成就列表").optional(),
-    achievements_summary: z.string().describe("成就摘要").optional()
+    achievements_summary: z.string().describe("成就摘要").optional(),
+    scores: z.array(z.object({
+        category: z.string().describe("評分類別"),
+        grade: z.enum(['A+', 'A', 'A-', 'B+', 'B', 'B-', 'C+', 'C', 'C-', 'D', 'F'] as const).describe('Grade (A+, A, A-, B+, B, B-, C+, C, C-, D, F)'),
+        description: z.string().describe("評分描述"),
+        comment: z.string().describe("AI評語"),
+        icon: z.string().describe("圖示表情符號"),
+        suggestions: z.array(z.string()).describe("改進建議")
+    })).describe("技術履歷細節完整度評分列表")
 });
 
 export type ResumeAnalysisResult = z.infer<typeof ResumeAnalysisSchema>;
@@ -292,7 +265,29 @@ export class OpenAIClient {
     private jsonParser: JsonOutputParser;
 
     constructor(options: OpenAIClientOptions) {
-        this.config = options.config || resumeAnalysisConfig;
+        console.log('🤖 [OpenAI Client] Initializing with options:', {
+            modelName: options.config?.modelName || DEFAULT_CONFIG.modelName,
+            temperature: options.config?.temperature || DEFAULT_CONFIG.temperature,
+            hasSystemPrompt: !!(options.config?.systemPrompt),
+            dynamicPrompt: !options.config?.systemPrompt
+        });
+
+        // 使用提供的配置或預設配置，並動態生成 system prompt
+        this.config = {
+            ...DEFAULT_CONFIG,
+            ...options.config
+        };
+        
+        // 如果沒有提供 systemPrompt，則動態生成
+        if (!options.config?.systemPrompt) {
+            this.config.systemPrompt = generateSystemPrompt(SCORE_CATEGORIES);
+        }
+
+        console.log('📋 [OpenAI Client] Final config:', {
+            modelName: this.config.modelName,
+            temperature: this.config.temperature,
+            promptLength: this.config.systemPrompt?.length || 0
+        });
         
         // Initialize JSON parser for LangChain structured output
         this.jsonParser = new JsonOutputParser();
@@ -391,14 +386,25 @@ export class OpenAIClient {
 
     // 檢查文件類型
     private getFileType(fileName: string): SupportedFileType | null {
+        console.log(`🔍 [OpenAI Client] Analyzing file type for: "${fileName}"`);
         const extension = fileName.split('.').pop()?.toLowerCase();
-        if (!extension) return null;
+        console.log(`🔍 [OpenAI Client] Extracted extension: "${extension}"`);
+        
+        if (!extension) {
+            console.log(`❌ [OpenAI Client] No extension found for: "${fileName}"`);
+            return null;
+        }
 
         for (const [type, extensions] of Object.entries(SUPPORTED_FILE_TYPES)) {
+            console.log(`🔍 [OpenAI Client] Checking type "${type}" with extensions:`, extensions);
             if ((extensions as readonly string[]).includes(extension)) {
+                console.log(`✅ [OpenAI Client] Match found: "${fileName}" -> type "${type}"`);
                 return type as SupportedFileType;
             }
         }
+        
+        console.log(`❌ [OpenAI Client] No matching type found for extension "${extension}" in file "${fileName}"`);
+        console.log(`🔍 [OpenAI Client] Available extensions:`, SUPPORTED_FILE_TYPES);
         return null;
     }
 
@@ -500,6 +506,8 @@ ${additionalText ? `\n額外資訊：\n${additionalText}` : ''}
 - expertise_summary: 技能摘要
 - work_experiences: 工作經驗列表（每個經驗包含 company, position, duration, description）
 - work_experiences_summary: 工作經驗摘要
+- education_background: 教育背景列表（每個教育經歷包含 institution, degree, major, duration, gpa, courses, achievements）
+- education_summary: 教育背景摘要
 - achievements: 成就列表
 - achievements_summary: 成就摘要
 
@@ -665,7 +673,7 @@ ${additionalText ? `\n額外資訊：\n${additionalText}` : ''}
             // Create prompt template for structured output
             const prompt = ChatPromptTemplate.fromMessages([
                 ["system", this.config.systemPrompt],
-                ["human", "請分析以下履歷內容並以 JSON 格式回傳結果：\n\n履歷內容：\n{resume_content}\n\n額外資訊：\n{additional_text}\n\n請以 JSON 格式回傳分析結果，包含以下欄位：\n- projects: 專案列表（每個專案包含 name, description, technologies, duration, role）\n- projects_summary: 專案摘要\n- expertise: 技能列表\n- expertise_summary: 技能摘要\n- work_experiences: 工作經驗列表（每個經驗包含 company, position, duration, description）\n- work_experiences_summary: 工作經驗摘要\n- achievements: 成就列表\n- achievements_summary: 成就摘要\n\n請確保回傳有效的 JSON 格式。"]
+                ["human", "請分析以下履歷內容並以 JSON 格式回傳結果：\n\n履歷內容：\n{resume_content}\n\n額外資訊：\n{additional_text}\n\n請以 JSON 格式回傳分析結果，包含以下欄位：\n- projects: 專案列表（每個專案包含 name, description, technologies, duration, role）\n- projects_summary: 專案摘要\n- expertise: 技能列表\n- expertise_summary: 技能摘要\n- work_experiences: 工作經驗列表（每個經驗包含 company, position, duration, description）\n- work_experiences_summary: 工作經驗摘要\n- education_background: 教育背景列表，每個教育經歷包含 institution, degree, major, duration, gpa, courses, achievements\n- education_summary: 教育背景摘要\n- achievements: 成就列表\n- achievements_summary: 成就摘要\n\n請確保回傳有效的 JSON 格式。"]
             ]);
 
             const chain = prompt.pipe(this.structuredChatModel);
