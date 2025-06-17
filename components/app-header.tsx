@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { User } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { ThemeSwitcher } from "./theme-switcher";
 
 const AppHeader = () => {
   const pathname = usePathname();
@@ -116,7 +117,7 @@ const AppHeader = () => {
                 </Button>
               </div>
             )}
-            {/* <ThemeSwitcher /> */}
+            <ThemeSwitcher />
           </div>
         </div>
       </div>
