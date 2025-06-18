@@ -53,8 +53,8 @@ const AppHeader = () => {
         <div className="flex items-center justify-between">
           {/* Brand Logo & Name */}
           <Link href="/" className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-cyan-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-lg">📄</span>
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center">
+              <span className="text-white font-bold text-2xl">✨</span>
             </div>
             <div>
               <h1 className="text-xl font-bold text-gray-900 dark:text-white">
