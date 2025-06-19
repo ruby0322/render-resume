@@ -677,7 +677,7 @@ export function AnalysisScores({ scores }: AnalysisScoresProps) {
           </div>
 
           {/* Call to action */}
-          <div className="text-center pt-4 border-t border-gray-200">
+          <div className="text-center pt-4 pb-6 border-t border-gray-200">
             <p className="text-sm text-gray-600 mb-2">你也想測試你的履歷嗎？快上 RenderResume 看看吧！</p>
             <div className="px-4 py-2 rounded-lg inline-block">
               <p className="font-semibold text-sm">
@@ -686,18 +686,11 @@ export function AnalysisScores({ scores }: AnalysisScoresProps) {
             </div>
           </div>
         </div>
-
-        {/* Footer watermark */}
-        <div className="px-6 pt-3 pb-0 text-center">
-          <p className="text-md font-medium text-gray-500">
-            © RenderResume - AI 履歷生成器
-          </p>
-        </div>
       </div>
 
       {/* 預覽對話框 */}
       <Dialog open={showPreviewDialog} onOpenChange={setShowPreviewDialog}>
-        <DialogContent className="max-w-md mx-auto">
+        <DialogContent className="max-w-[95vw] mx-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center">
               <Eye className="w-5 h-5 mr-2" />

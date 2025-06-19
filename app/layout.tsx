@@ -28,17 +28,19 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${geistSans.className} antialiased`}>
+      <body className={`${geistSans.className} antialiased w-full overflow-x-hidden`}>
         <ThemeProvider
           attribute="class"
           defaultTheme="light"
           enableSystem
           disableTransitionOnChange
         >
-          <AppHeader />
-          <main>
-            {children}
-          </main>
+          <div className="w-full overflow-x-hidden">
+            <AppHeader />
+            <main className="w-full overflow-x-hidden">
+              {children}
+            </main>
+          </div>
         </ThemeProvider>
         <Toaster />
       </body>
