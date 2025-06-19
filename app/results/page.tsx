@@ -310,7 +310,7 @@ export default function ResultsPage() {
         </div>
 
         {/* Action Buttons */}
-        <div className="flex flex-wrap justify-center gap-4 mb-8">
+        <div className="flex flex-col flex-wrap justify-center gap-4 mb-8">
           <Button
             onClick={handleViewAnalysisReport}
             className="bg-cyan-600 hover:bg-cyan-700 text-white flex items-center px-6 py-3 text-lg"
@@ -318,11 +318,13 @@ export default function ResultsPage() {
             <BarChart3 className="h-5 w-5 mr-2" />
             查看分析評分報告
           </Button>
+          <div className="flex flex-wrap justify-center gap-4 mb-2">
+
           <Button
             onClick={handleExportJSON}
             variant="outline"
             className="flex items-center"
-          >
+            >
             <Download className="h-4 w-4 mr-2" />
             匯出 JSON
           </Button>
@@ -330,7 +332,7 @@ export default function ResultsPage() {
             onClick={handleShare}
             variant="outline"
             className="flex items-center"
-          >
+            >
             <Share2 className="h-4 w-4 mr-2" />
             分享結果
           </Button>
@@ -338,14 +340,15 @@ export default function ResultsPage() {
             onClick={handleNewAnalysis}
             variant="outline"
             className="flex items-center"
-          >
+            >
             <FileText className="h-4 w-4 mr-2" />
             新增分析
           </Button>
+          </div>
         </div>
 
         {/* Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
           <Card className="bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800">
             <CardContent className="p-6 text-center">
               <GraduationCap className="h-8 w-8 text-blue-600 dark:text-blue-400 mx-auto mb-2" />
@@ -690,7 +693,7 @@ export default function ResultsPage() {
         </div>
 
         {/* Bottom Actions */}
-        <div className="flex justify-between items-center mt-12 pt-8 border-t border-gray-200 dark:border-gray-700">
+        <div className="md:flex-row flex-col gap-4 flex justify-between items-center mt-12 pt-8 border-t border-gray-200 dark:border-gray-700">
           <Button 
             variant="outline" 
             onClick={() => router.push('/analyze')}
