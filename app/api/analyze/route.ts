@@ -187,6 +187,7 @@ async function handleFileUpload(request: NextRequest) {
         
         console.log('✅ [API] Document analysis completed successfully');
         console.log('📊 [API] Analysis result keys:', Object.keys(result));
+        console.log('📊 [API] Analysis result:', result);
 
         return NextResponse.json({
             success: true,

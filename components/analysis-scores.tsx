@@ -41,16 +41,16 @@ export function AnalysisScores({ scores }: AnalysisScoresProps) {
   // Convert letter grades to numerical values for calculations
   const gradeToNumber = (grade: LetterGrade): number => {
     switch (grade) {
-      case 'A+': return 97;
-      case 'A': return 92;
-      case 'A-': return 87;
-      case 'B+': return 82;
-      case 'B': return 77;
-      case 'B-': return 72;
-      case 'C+': return 65;
-      case 'C': return 55;
-      case 'C-': return 45;
-      case 'F': return 30;
+      case 'A+': return 95;
+      case 'A': return 87;
+      case 'A-': return 82;
+      case 'B+': return 78;
+      case 'B': return 75;
+      case 'B-': return 70;
+      case 'C+': return 68;
+      case 'C': return 65;
+      case 'C-': return 60;
+      case 'F': return 50;
       default: return 0;
     }
   };
@@ -58,15 +58,15 @@ export function AnalysisScores({ scores }: AnalysisScoresProps) {
   // Calculate overall grade based on average of numerical scores
   const overallNumericalScore = Math.round(scores.reduce((sum, score) => sum + gradeToNumber(score.grade), 0) / scores.length);
   const numberToGrade = (score: number): LetterGrade => {
-    if (score >= 95) return 'A+';
-    if (score >= 90) return 'A';
-    if (score >= 85) return 'A-';
-    if (score >= 80) return 'B+';
-    if (score >= 75) return 'B';
+    if (score >= 90) return 'A+';
+    if (score >= 85) return 'A';
+    if (score >= 80) return 'A-';
+    if (score >= 77) return 'B+';
+    if (score >= 73) return 'B';
     if (score >= 70) return 'B-';
-    if (score >= 60) return 'C+';
-    if (score >= 50) return 'C';
-    if (score >= 40) return 'C-';
+    if (score >= 67) return 'C+';
+    if (score >= 63) return 'C';
+    if (score >= 60) return 'C-';
     return 'F';
   };
 

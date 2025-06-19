@@ -449,6 +449,15 @@ export class NativeOpenAIClient {
 - missing_content: 缺失內容分析（包含 critical_missing, recommended_additions, impact_analysis, priority_suggestions）
 - scores: 評分列表（每個評分包含 category, grade, description, comment, icon, suggestions）
 
+**重要提醒 - 必須包含所有 6 個評分類別**：
+scores 陣列必須包含以下 6 個評分類別，每個都必須有評分：
+1. 「技術深度與廣度」- icon: 💻
+2. 「項目複雜度與影響力」- icon: 🚀  
+3. 「專業經驗完整度」- icon: 💼
+4. 「教育背景」- icon: 🎓
+5. 「成果與驗證」- icon: 🏆
+6. 「整體專業形象」- icon: ✨
+
 **重要提醒 - 評分欄位的 comment 格式要求**：
 在 scores 的 comment 欄位中，必須包含完整的 Chain of Thought 推理過程，格式如下：
 "【推理過程】觀察：候選人展示了...證據。STAR分析：S-情境描述完整，T-任務明確，A-行動具體，R-結果量化。對照標準：符合A+等第的...要求。權衡判斷：技術深度和廣度都...。【最終評分】A+ - 技術領域頂尖專家，引領技術趨勢。【改進建議】建議..."
@@ -460,6 +469,17 @@ export class NativeOpenAIClient {
 4. 在 missing_content 中明確指出缺失的關鍵履歷要素
 5. 使用 STAR 原則評估項目和工作經驗的完整性
 6. 評分的 comment 欄位必須嚴格遵循 CoT 推理格式，包含【推理過程】、【最終評分】、【改進建議】三個部分
+7. 對於完全無法提取內容的項目，仍要給予評分與回饋，但評分為 F
+8. **必須確保 scores 陣列包含上述所有 6 個類別，不可遺漏任何一個**
+
+**強制 F 評分規則**：
+- 如果「技術深度與廣度」類別完全無法從履歷中提取到任何技能、專案技術棧或工作中使用的技術，必須給予 F 評分
+- 如果「項目複雜度與影響力」類別完全無法提取到任何專案或項目經驗，必須給予 F 評分  
+- 如果「專業經驗完整度」類別完全無法提取到任何工作經驗，必須給予 F 評分
+- 如果「教育背景」類別完全無法提取到任何教育資訊，必須給予 F 評分
+- 如果「成果與驗證」類別完全無法提取到任何成就、獎項或證書，必須給予 F 評分
+- 如果「整體專業形象」類別因為履歷內容嚴重不足無法評估，必須給予 F 評分
+- F 評分的 comment 必須明確說明「完全無法提取相關內容」作為評分理由
 
 請確保回傳有效的 JSON 格式。`;
 
@@ -651,7 +671,8 @@ export class NativeOpenAIClient {
                         return obj;
                     };
                     
-                    const processedObj = processEmptyFields(resultObj);
+                    // 先處理空白欄位，然後強制 F 評分
+                    const processedObj = this.enforceFailingGradesForMissingContent(processEmptyFields(resultObj));
                     
                     // 重新驗證
                     try {
@@ -708,6 +729,253 @@ export class NativeOpenAIClient {
         }
     }
 
+    // 強制對無法提取內容的項目給予 F 評分的通用方法
+    private enforceFailingGradesForMissingContent(obj: Record<string, unknown>): Record<string, unknown> {
+        console.log('🔍 [Native OpenAI Client] Enforcing F grades for missing content...');
+        
+        // 檢查各個履歷內容區塊的完整性
+        const hasProjects = obj.projects && Array.isArray(obj.projects) && obj.projects.length > 0 &&
+            obj.projects.some((p: unknown) => p && typeof p === 'object' && 
+                Object.values(p as Record<string, unknown>).some(val => val && String(val).trim() !== ''));
+        
+        const hasWorkExperiences = obj.work_experiences && Array.isArray(obj.work_experiences) && obj.work_experiences.length > 0 &&
+            obj.work_experiences.some((exp: unknown) => exp && typeof exp === 'object' && 
+                Object.values(exp as Record<string, unknown>).some(val => val && String(val).trim() !== ''));
+        
+        const hasEducation = obj.education_background && Array.isArray(obj.education_background) && obj.education_background.length > 0 &&
+            obj.education_background.some((edu: unknown) => edu && typeof edu === 'object' && 
+                Object.values(edu as Record<string, unknown>).some(val => val && String(val).trim() !== ''));
+        
+        const hasExpertise = obj.expertise && Array.isArray(obj.expertise) && obj.expertise.length > 0 &&
+            obj.expertise.some((skill: unknown) => skill && String(skill).trim() !== '');
+        
+        const hasAchievements = obj.achievements && Array.isArray(obj.achievements) && obj.achievements.length > 0 &&
+            obj.achievements.some((achievement: unknown) => achievement && String(achievement).trim() !== '');
+
+        // 檢查履歷內容的整體完整性
+        const hasAnyMeaningfulContent = hasProjects || hasWorkExperiences || hasEducation || hasExpertise || hasAchievements;
+        
+        // 檢查摘要內容的完整性
+        const hasProjectsSummary = obj.projects_summary && String(obj.projects_summary).trim() !== '' && 
+            !String(obj.projects_summary).includes('無相關資訊') && !String(obj.projects_summary).includes('尚未提供');
+        
+        const hasWorkSummary = obj.work_experiences_summary && String(obj.work_experiences_summary).trim() !== '' && 
+            !String(obj.work_experiences_summary).includes('無相關資訊') && !String(obj.work_experiences_summary).includes('尚未提供');
+        
+        const hasEducationSummary = obj.education_summary && String(obj.education_summary).trim() !== '' && 
+            !String(obj.education_summary).includes('無相關資訊') && !String(obj.education_summary).includes('尚未提供');
+        
+        const hasAchievementsSummary = obj.achievements_summary && String(obj.achievements_summary).trim() !== '' && 
+            !String(obj.achievements_summary).includes('無相關資訊') && !String(obj.achievements_summary).includes('尚未提供');
+        
+        console.log('📊 [Native OpenAI Client] Content analysis:', {
+            hasProjects,
+            hasWorkExperiences,
+            hasEducation,
+            hasExpertise,
+            hasAchievements,
+            hasAnyMeaningfulContent,
+            hasProjectsSummary,
+            hasWorkSummary,
+            hasEducationSummary,
+            hasAchievementsSummary
+        });
+        
+        // 確保 scores 存在且為陣列
+        if (!obj.scores || !Array.isArray(obj.scores)) {
+            obj.scores = [];
+        }
+        
+        // 處理每個評分項目，對缺失內容強制給予 F 評分
+        obj.scores = (obj.scores as Array<unknown>).map((score: unknown) => {
+            if (typeof score === 'object' && score !== null) {
+                const scoreObj = score as Record<string, unknown>;
+                const category = String(scoreObj.category || '').toLowerCase();
+                const categoryId = String(scoreObj.category || '');
+                
+                let shouldBeF = false;
+                let missingReason = '';
+                let correctIcon = '❌'; // 預設圖示
+                
+                // 根據類別檢查相關內容是否缺失，並設置正確的圖示
+                if (category.includes('技術') || category.includes('technical') || category.includes('深度') || category.includes('廣度')) {
+                    correctIcon = '💻';
+                    if (!hasExpertise && !hasProjects && !hasWorkExperiences) {
+                        shouldBeF = true;
+                        missingReason = '完全無法提取技術相關內容，包括技能列表、專案經驗和工作經驗中的技術使用';
+                    }
+                }
+                
+                if (category.includes('項目') || category.includes('project') || category.includes('專案') || category.includes('複雜度') || category.includes('影響力')) {
+                    correctIcon = '🚀';
+                    if (!hasProjects && !hasProjectsSummary) {
+                        shouldBeF = true;
+                        missingReason = '完全無法提取專案/項目經驗相關內容';
+                    }
+                }
+                
+                if (category.includes('專業') || category.includes('工作') || category.includes('experience') || category.includes('professional') || category.includes('經驗')) {
+                    correctIcon = '💼';
+                    if (!hasWorkExperiences && !hasWorkSummary) {
+                        shouldBeF = true;
+                        missingReason = '完全無法提取工作經驗相關內容';
+                    }
+                }
+                
+                if (category.includes('教育') || category.includes('學歷') || category.includes('education') || category.includes('背景')) {
+                    correctIcon = '🎓';
+                    if (!hasEducation && !hasEducationSummary) {
+                        shouldBeF = true;
+                        missingReason = '完全無法提取教育背景相關內容';
+                    }
+                }
+
+                if (category.includes('成就') || category.includes('獎項') || category.includes('achievement') || category.includes('award') || 
+                    category.includes('成果') || category.includes('驗證') || categoryId.includes('achievements_validation')) {
+                    correctIcon = '🏆';
+                    if (!hasAchievements && !hasAchievementsSummary) {
+                        shouldBeF = true;
+                        missingReason = '完全無法提取成就、獎項或成果驗證相關內容';
+                    }
+                }
+
+                if (category.includes('表達') || category.includes('格式') || category.includes('presentation') || category.includes('format') || category.includes('履歷')) {
+                    correctIcon = '📝';
+                    // 對於履歷表達與格式類別，如果完全沒有任何有意義的內容，則給予 F
+                    if (!hasAnyMeaningfulContent) {
+                        shouldBeF = true;
+                        missingReason = '履歷完全無法提取任何有意義的內容，無法評估表達能力與格式品質';
+                    }
+                }
+
+                if (category.includes('整體') || category.includes('綜合') || category.includes('overall') || category.includes('comprehensive') ||
+                    category.includes('專業形象') || category.includes('professional_image') || categoryId.includes('professional_image')) {
+                    correctIcon = '✨';
+                    // 對於整體評估類別，如果沒有足夠的內容進行綜合評估
+                    if (!hasAnyMeaningfulContent || (!hasWorkExperiences && !hasProjects && !hasEducation)) {
+                        shouldBeF = true;
+                        missingReason = '履歷內容嚴重不足，無法進行整體綜合評估或專業形象評定';
+                    }
+                }
+                
+                // 如果該項目應該為 F，強制修改評分
+                if (shouldBeF) {
+                    console.log(`⚠️ [Native OpenAI Client] Forcing F grade for category: ${scoreObj.category} - ${missingReason}`);
+                    
+                    scoreObj.grade = 'F';
+                    scoreObj.description = '內容嚴重缺失，無法進行有效評估';
+                    scoreObj.comment = `【推理過程】履歷分析過程中發現：${missingReason}。根據評分標準，當完全無法提取相關內容時，必須給予最低評分。這不是候選人能力的直接反映，而是履歷資訊提供不足的結果。內容檢查結果顯示該類別對應的履歷區塊為空白或無效。對照標準：F 等第適用於「完全不符合要求」或「無相關資訊」的情況。【最終評分】F - 資訊嚴重不足，無法進行有效評估。【改進建議】強烈建議補充完整的${String(scoreObj.category)}相關資訊，包括詳細描述、具體成果和量化指標，確保履歷內容的完整性和可讀性，重新整理履歷格式以提高資訊提取效率。`;
+                    scoreObj.icon = correctIcon;
+                    scoreObj.suggestions = [
+                        `補充完整的${String(scoreObj.category)}相關資訊`,
+                        '提供具體的描述和量化成果',
+                        '確保履歷內容的完整性和可讀性',
+                        '重新整理履歷格式以提高資訊提取效率',
+                        '檢查履歷是否包含必要的基本資訊'
+                    ];
+                } else {
+                    // 即使不是 F 評分，也確保有正確的圖示
+                    if (!scoreObj.icon || scoreObj.icon === '❌') {
+                        scoreObj.icon = correctIcon;
+                    }
+                }
+                
+                return scoreObj;
+            }
+            return score;
+        });
+        
+        console.log('✅ [Native OpenAI Client] Completed F grade enforcement for missing content');
+        
+        // 確保所有必要的評分類別都存在
+        const requiredCategories = [
+            { name: '技術深度與廣度', icon: '💻' },
+            { name: '項目複雜度與影響力', icon: '🚀' },
+            { name: '專業經驗完整度', icon: '💼' },
+            { name: '教育背景', icon: '🎓' },
+            { name: '成果與驗證', icon: '🏆' },
+            { name: '整體專業形象', icon: '✨' }
+        ];
+        
+        const existingCategories = (obj.scores as Array<unknown>).map((score: unknown) => {
+            if (typeof score === 'object' && score !== null) {
+                return String((score as Record<string, unknown>).category || '');
+            }
+            return '';
+        });
+        
+        // 檢查缺失的類別並添加
+        for (const required of requiredCategories) {
+            const exists = existingCategories.some(existing => 
+                existing.includes(required.name) || 
+                existing.toLowerCase().includes(required.name.toLowerCase())
+            );
+            
+            if (!exists) {
+                console.log(`⚠️ [Native OpenAI Client] Missing category: ${required.name}, adding default F grade`);
+                
+                // 根據類別判斷是否應該為 F
+                let shouldBeF = false;
+                let missingReason = '';
+                let gradeToAssign = 'F';
+                
+                if (required.name.includes('技術')) {
+                    shouldBeF = !hasExpertise && !hasProjects && !hasWorkExperiences;
+                    missingReason = '完全無法提取技術相關內容，包括技能列表、專案經驗和工作經驗中的技術使用';
+                } else if (required.name.includes('項目') || required.name.includes('複雜度')) {
+                    shouldBeF = !hasProjects && !hasProjectsSummary;
+                    missingReason = '完全無法提取專案/項目經驗相關內容';
+                } else if (required.name.includes('專業') || required.name.includes('經驗')) {
+                    shouldBeF = !hasWorkExperiences && !hasWorkSummary;
+                    missingReason = '完全無法提取工作經驗相關內容';
+                } else if (required.name.includes('教育')) {
+                    shouldBeF = !hasEducation && !hasEducationSummary;
+                    missingReason = '完全無法提取教育背景相關內容';
+                    // 教育背景可能不是 F，如果有基本資訊
+                    if (hasEducation || hasEducationSummary) {
+                        shouldBeF = false;
+                        gradeToAssign = 'B';
+                        missingReason = '教育背景資訊基本完整，但缺乏詳細描述';
+                    }
+                } else if (required.name.includes('成果') || required.name.includes('驗證')) {
+                    shouldBeF = !hasAchievements && !hasAchievementsSummary;
+                    missingReason = '完全無法提取成就、獎項或成果驗證相關內容';
+                } else if (required.name.includes('整體') || required.name.includes('專業形象')) {
+                    shouldBeF = !hasAnyMeaningfulContent || (!hasWorkExperiences && !hasProjects && !hasEducation);
+                    missingReason = '履歷內容嚴重不足，無法進行整體綜合評估或專業形象評定';
+                }
+                
+                if (!shouldBeF && gradeToAssign === 'F') {
+                    gradeToAssign = 'C';
+                    missingReason = `${required.name}相關內容不足，需要改進`;
+                }
+                
+                const defaultScore = {
+                    category: required.name,
+                    grade: gradeToAssign,
+                    description: shouldBeF ? '內容嚴重缺失，無法進行有效評估' : '內容不足，需要改進',
+                    comment: shouldBeF ? 
+                        `【推理過程】履歷分析過程中發現：${missingReason}。根據評分標準，當完全無法提取相關內容時，必須給予最低評分。這不是候選人能力的直接反映，而是履歷資訊提供不足的結果。內容檢查結果顯示該類別對應的履歷區塊為空白或無效。對照標準：F 等第適用於「完全不符合要求」或「無相關資訊」的情況。【最終評分】F - 資訊嚴重不足，無法進行有效評估。【改進建議】強烈建議補充完整的${required.name}相關資訊，包括詳細描述、具體成果和量化指標，確保履歷內容的完整性和可讀性，重新整理履歷格式以提高資訊提取效率。` :
+                        `【推理過程】履歷分析過程中發現：${missingReason}。雖然有基本資訊，但詳細程度不足以進行深入評估。對照標準：符合 ${gradeToAssign} 等第的基本要求，但有改進空間。【最終評分】${gradeToAssign} - 基本符合要求，但需要完善。【改進建議】建議補充更詳細的${required.name}相關資訊，提升履歷內容的豐富度和說服力。`,
+                    icon: required.icon,
+                    suggestions: [
+                        `補充完整的${required.name}相關資訊`,
+                        '提供具體的描述和量化成果',
+                        '確保履歷內容的完整性和可讀性',
+                        '重新整理履歷格式以提高資訊提取效率',
+                        '檢查履歷是否包含必要的基本資訊'
+                    ]
+                };
+                
+                (obj.scores as Array<unknown>).push(defaultScore);
+            }
+        }
+        
+        console.log(`✅ [Native OpenAI Client] Ensured all ${requiredCategories.length} categories exist. Total scores: ${(obj.scores as Array<unknown>).length}`);
+        
+        return obj;
+    }
+
     async analyzeResume(resumeContent: string, additionalText?: string): Promise<ResumeAnalysisResult> {
         console.log('🚀 [Native OpenAI Client] Starting resume analysis');
         
@@ -740,10 +1008,18 @@ ${additionalText || "無"}
 - missing_content: 缺失內容分析（包含 critical_missing, recommended_additions, impact_analysis, priority_suggestions）
 - scores: 評分列表（每個評分包含 category, grade, description, comment, icon, suggestions）
 
+**重要提醒 - 必須包含所有 6 個評分類別**：
+scores 陣列必須包含以下 6 個評分類別，每個都必須有評分：
+1. 「技術深度與廣度」- icon: 💻
+2. 「項目複雜度與影響力」- icon: 🚀  
+3. 「專業經驗完整度」- icon: 💼
+4. 「教育背景」- icon: 🎓
+5. 「成果與驗證」- icon: 🏆
+6. 「整體專業形象」- icon: ✨
+
 **重要提醒 - 評分欄位的 comment 格式要求**：
 在 scores 的 comment 欄位中，必須包含完整的 Chain of Thought 推理過程，格式如下：
-**格式範例**：
-"【推理過程】候選人在清華大學計算機系的修課紀錄顯示具備扎實的演算法和系統設計基礎，與目標職位高度匹配。技術分析：在「智慧推薦系統」項目中使用的深度學習模型架構展現了前沿技術應用能力，特別是其對 Transformer 架構的深度優化令人印象深刻。STAR分析：S-在字節跳動實習期間面臨百萬級用戶推薦系統挑戰，T-負責優化推薦演算法準確率，A-採用多模態融合技術並引入對比學習機制，R-最終將點擊率提升了 15.3%，獲得導師高度認可。對照標準：技術深度達到 A 等第要求的「能設計複雜系統架構」，但在「引領技術趨勢」方面略有不足。權衡判斷：雖然在學術背景和項目技術應用上表現優秀，但缺乏開源貢獻和技術社群影響力。【最終評分】A - 技術專家級別，具備深度專業能力。【改進建議】建議將「客戶管理系統」項目中的權限管理模組重新整理，詳細說明使用的安全框架和設計模式；補充開源項目貢獻經歷，如在 GitHub 上維護相關技術領域的開源專案；將碩士論文的研究成果整理成技術部落格文章，提升技術影響力。"
+"【推理過程】觀察：候選人展示了...證據。STAR分析：S-情境描述完整，T-任務明確，A-行動具體，R-結果量化。對照標準：符合A+等第的...要求。權衡判斷：技術深度和廣度都...。【最終評分】A+ - 技術領域頂尖專家，引領技術趨勢。【改進建議】建議..."
 
 ### 具體化分析要求
 在進行評分分析時，必須遵循以下具體化原則：
@@ -769,6 +1045,16 @@ ${additionalText || "無"}
 4. 在 missing_content 中明確指出缺失的關鍵履歷要素
 5. 使用 STAR 原則評估項目和工作經驗的完整性
 6. 評分的 comment 欄位必須嚴格遵循 CoT 推理格式，包含【推理過程】、【最終評分】、【改進建議】三個部分
+7. 對於完全無法提取內容的項目，仍要給予評分與回饋，但評分為 F
+
+**強制 F 評分規則**：
+- 如果「技術深度與廣度」類別完全無法從履歷中提取到任何技能、專案技術棧或工作中使用的技術，必須給予 F 評分
+- 如果「項目複雜度與影響力」類別完全無法提取到任何專案或項目經驗，必須給予 F 評分  
+- 如果「專業經驗完整度」類別完全無法提取到任何工作經驗，必須給予 F 評分
+- 如果「教育背景」類別完全無法提取到任何教育資訊，必須給予 F 評分
+- 如果「成果與驗證」類別完全無法提取到任何成就、獎項或證書，必須給予 F 評分
+- 如果「整體專業形象」類別因為履歷內容嚴重不足無法評估，必須給予 F 評分
+- F 評分的 comment 必須明確說明「完全無法提取相關內容」作為評分理由
 
 請確保回傳有效的 JSON 格式。`
             }
@@ -827,10 +1113,10 @@ ${additionalText || "無"}
                                 }
                             }
                         }
+                        return obj;
                     };
                     
-                    processEmptyFields(resultObj);
-                    
+                    // 處理 achievements 格式
                     if (resultObj.achievements && Array.isArray(resultObj.achievements) && 
                         resultObj.achievements.length > 0 && 
                         typeof resultObj.achievements[0] === 'object') {
@@ -911,8 +1197,11 @@ ${additionalText || "無"}
                         console.log('🔄 [Native OpenAI Client] Fixed scores suggestions array formats');
                     }
                     
+                    // 先處理空白欄位，然後強制 F 評分
+                    const processedObj = this.enforceFailingGradesForMissingContent(processEmptyFields(resultObj));
+                    
                     try {
-                        const revalidatedResult = ResumeAnalysisSchema.parse(resultObj);
+                        const revalidatedResult = ResumeAnalysisSchema.parse(processedObj);
                         console.log('✅ [Native OpenAI Client] Zod validation passed after post-processing for resume analysis');
                         return revalidatedResult;
                     } catch {
@@ -940,7 +1229,7 @@ ${additionalText || "無"}
                         };
                         
                         // 合併有效的字段
-                        return { ...defaultResult, ...resultObj } as ResumeAnalysisResult;
+                        return { ...defaultResult, ...processedObj } as ResumeAnalysisResult;
                     }
                 }
                 
