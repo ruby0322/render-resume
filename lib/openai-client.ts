@@ -82,6 +82,12 @@ export const ResumeAnalysisSchema = z.object({
     education_summary: z.string().describe("教育背景摘要").optional(),
     achievements: z.array(z.string()).describe("成就列表").optional(),
     achievements_summary: z.string().describe("成就摘要").optional(),
+    missing_content: z.object({
+        critical_missing: z.array(z.string()).describe("關鍵缺失項目"),
+        recommended_additions: z.array(z.string()).describe("建議補充內容"),
+        impact_analysis: z.string().describe("缺失內容對整體評估的影響分析"),
+        priority_suggestions: z.array(z.string()).describe("優先補強建議")
+    }).describe("缺失內容分析"),
     scores: z.array(z.object({
         category: z.string().describe("評分類別"),
         grade: z.enum(['A+', 'A', 'A-', 'B+', 'B', 'B-', 'C+', 'C', 'C-', 'D', 'F'] as const).describe('Grade (A+, A, A-, B+, B, B-, C+, C, C-, D, F)'),
@@ -504,12 +510,21 @@ ${additionalText ? `\n額外資訊：\n${additionalText}` : ''}
 - projects_summary: 專案摘要
 - expertise: 技能列表
 - expertise_summary: 技能摘要
-- work_experiences: 工作經驗列表（每個經驗包含 company, position, duration, description）
+- work_experiences: 工作經驗列表（每個經驗包含 company, position, duration, description, contribution, technologies）
 - work_experiences_summary: 工作經驗摘要
 - education_background: 教育背景列表（每個教育經歷包含 institution, degree, major, duration, gpa, courses, achievements）
 - education_summary: 教育背景摘要
 - achievements: 成就列表
 - achievements_summary: 成就摘要
+- missing_content: 缺失內容分析（包含 critical_missing, recommended_additions, impact_analysis, priority_suggestions）
+- scores: 評分列表（每個評分包含 category, grade, description, comment, icon, suggestions）
+
+特別注意：
+1. 對於圖片中的履歷或作品集，請盡可能保留所有可見細節
+2. 對於零散資料，僅整合明確可見的資訊，缺失資料必須留空
+3. 嚴禁基於部分資訊進行推理或產生幻覺
+4. 在 missing_content 中明確指出缺失的關鍵履歷要素
+5. 使用 STAR 原則評估項目和工作經驗的完整性
 
 請確保回傳有效的 JSON 格式。`;
 
@@ -591,77 +606,49 @@ ${additionalText ? `\n額外資訊：\n${additionalText}` : ''}
             // Fallback to original manual parsing method
             const prompt = ChatPromptTemplate.fromMessages([
                 ["system", this.config.systemPrompt],
-                ["human", messageContent]
+                ["human", "請分析以下履歷內容並以 JSON 格式回傳結果：\n\n履歷內容：\n{resume_content}\n\n額外資訊：\n{additional_text}\n\n請以 JSON 格式回傳分析結果，包含以下欄位：\n- projects: 專案列表（每個專案包含 name, description, technologies, duration, role, contribution）\n- projects_summary: 專案摘要\n- expertise: 技能列表\n- expertise_summary: 技能摘要\n- work_experiences: 工作經驗列表（每個經驗包含 company, position, duration, description, contribution, technologies）\n- work_experiences_summary: 工作經驗摘要\n- education_background: 教育背景列表（每個教育經歷包含 institution, degree, major, duration, gpa, courses, achievements）\n- education_summary: 教育背景摘要\n- achievements: 成就列表\n- achievements_summary: 成就摘要\n- missing_content: 缺失內容分析（包含 critical_missing, recommended_additions, impact_analysis, priority_suggestions）\n- scores: 評分列表（每個評分包含 category, grade, description, comment, icon, suggestions）\n\n特別注意：\n1. 對於履歷內容，請盡可能保留所有詳細資訊\n2. 僅整合明確提及的資訊，缺失資料必須留空\n3. 嚴禁基於部分資訊進行推理或產生幻覺\n4. 在 missing_content 中明確指出缺失的關鍵履歷要素\n5. 使用 STAR 原則評估項目和工作經驗的完整性\n\n請嚴格按照上述格式回傳 JSON 結果。"]
             ]);
 
-            const model = useVisionModel ? this.visionModel : this.chatModel;
-            const chain = prompt.pipe(model);
+            const chain = prompt.pipe(this.chatModel);
 
             try {
-                console.log('🚀 [OpenAI Client] Sending request to OpenAI (fallback)...');
-                const result = await chain.invoke({});
-                console.log('📥 [OpenAI Client] Received response from OpenAI (fallback)');
+                const result = await chain.invoke({
+                    resume_content: textContent,
+                    additional_text: additionalText || "無"
+                });
+
+                // 解析 AI 回應
+                const content = result.content as string;
                 
-                const content = result.content;
-                if (typeof content !== 'string') {
-                    throw new Error('AI 回應格式錯誤');
-                }
-
-                console.log('📝 [OpenAI Client] Response content length:', content.length);
-
-                // 解析 JSON
-                let parsedResult;
-                try {
-                    parsedResult = this.parseAIResponse(content);
-                    console.log('✅ [OpenAI Client] JSON parsing successful (fallback)');
+                // 使用智能解析方法
+                const parsedResult = this.parseAIResponse(content);
+                
+                // 檢查 achievements 的結構並進行自動轉換
+                if (parsedResult && typeof parsedResult === 'object' && parsedResult !== null) {
+                    const resultObj = parsedResult as Record<string, unknown>;
                     
-                    // 檢查解析結果是否為對象
-                    if (parsedResult && typeof parsedResult === 'object' && parsedResult !== null) {
-                        console.log('🔍 [OpenAI Client] Parsed result keys:', Object.keys(parsedResult as Record<string, unknown>));
+                    if (resultObj.achievements && Array.isArray(resultObj.achievements) && 
+                        resultObj.achievements.length > 0 && 
+                        typeof resultObj.achievements[0] === 'object') {
                         
-                        // 檢查 achievements 的結構並進行自動轉換
-                        const resultObj = parsedResult as Record<string, unknown>;
-                        if (resultObj.achievements && Array.isArray(resultObj.achievements) && 
-                            resultObj.achievements.length > 0 && 
-                            typeof resultObj.achievements[0] === 'object') {
-                            
-                            console.log('🔄 [OpenAI Client] Converting achievements from object array to string array');
-                            resultObj.achievements = resultObj.achievements.map((item: unknown) => {
-                                if (typeof item === 'object' && item !== null) {
-                                    const achievementObj = item as Record<string, unknown>;
-                                    return String(achievementObj.description || achievementObj.achievement || achievementObj.title || achievementObj.name) || JSON.stringify(item);
-                                }
-                                return String(item);
-                            });
-                            console.log('✅ [OpenAI Client] Achievements converted successfully');
-                        }
-                    } else {
-                        throw new Error('解析結果不是有效的對象');
+                        console.log('🔄 [OpenAI Client] Converting achievements from object array to string array (fallback)');
+                        resultObj.achievements = resultObj.achievements.map((item: unknown) => {
+                            if (typeof item === 'object' && item !== null) {
+                                const achievementObj = item as Record<string, unknown>;
+                                return String(achievementObj.description || achievementObj.achievement || achievementObj.title || achievementObj.name) || JSON.stringify(item);
+                            }
+                            return String(item);
+                        });
                     }
-                } catch (parseError) {
-                    console.error('❌ [OpenAI Client] JSON parsing failed:', parseError);
-                    throw new Error(`無法解析 AI 回應: ${parseError}`);
+                } else {
+                    throw new Error('解析結果不是有效的對象');
                 }
-
-                // 驗證結果
-                try {
-                    const validatedResult = ResumeAnalysisSchema.parse(parsedResult);
-                    console.log('✅ [OpenAI Client] Zod validation successful (fallback)');
-                    return validatedResult;
-                } catch (zodError) {
-                    console.error('❌ [OpenAI Client] Zod validation failed (fallback):', zodError);
-                    console.log('📄 [OpenAI Client] Raw parsed result for debugging:', JSON.stringify(parsedResult, null, 2));
-                    
-                    // 提供更詳細的錯誤信息
-                    if (zodError instanceof z.ZodError) {
-                        const errorDetails = zodError.errors.map(err => `${err.path.join('.')}: ${err.message}`).join(', ');
-                        throw new Error(`資料格式驗證失敗: ${errorDetails}`);
-                    }
-                    throw new Error(`資料格式驗證失敗: ${zodError}`);
-                }
+                
+                // 使用 Zod 驗證結果
+                return ResumeAnalysisSchema.parse(parsedResult);
             } catch (fallbackError) {
-                console.error('❌ [OpenAI Client] Fallback analysis failed:', fallbackError);
-                throw new Error(`分析失敗: ${fallbackError instanceof Error ? fallbackError.message : String(fallbackError)}`);
+                console.error("Resume analysis fallback error:", fallbackError);
+                throw new Error(`履歷分析失敗: ${fallbackError instanceof Error ? fallbackError.message : '未知錯誤'}`);
             }
         }
     }
@@ -673,7 +660,7 @@ ${additionalText ? `\n額外資訊：\n${additionalText}` : ''}
             // Create prompt template for structured output
             const prompt = ChatPromptTemplate.fromMessages([
                 ["system", this.config.systemPrompt],
-                ["human", "請分析以下履歷內容並以 JSON 格式回傳結果：\n\n履歷內容：\n{resume_content}\n\n額外資訊：\n{additional_text}\n\n請以 JSON 格式回傳分析結果，包含以下欄位：\n- projects: 專案列表（每個專案包含 name, description, technologies, duration, role）\n- projects_summary: 專案摘要\n- expertise: 技能列表\n- expertise_summary: 技能摘要\n- work_experiences: 工作經驗列表（每個經驗包含 company, position, duration, description）\n- work_experiences_summary: 工作經驗摘要\n- education_background: 教育背景列表，每個教育經歷包含 institution, degree, major, duration, gpa, courses, achievements\n- education_summary: 教育背景摘要\n- achievements: 成就列表\n- achievements_summary: 成就摘要\n\n請確保回傳有效的 JSON 格式。"]
+                ["human", "請分析以下履歷內容並以 JSON 格式回傳結果：\n\n履歷內容：\n{resume_content}\n\n額外資訊：\n{additional_text}\n\n請以 JSON 格式回傳分析結果，包含以下欄位：\n- projects: 專案列表（每個專案包含 name, description, technologies, duration, role, contribution）\n- projects_summary: 專案摘要\n- expertise: 技能列表\n- expertise_summary: 技能摘要\n- work_experiences: 工作經驗列表（每個經驗包含 company, position, duration, description, contribution, technologies）\n- work_experiences_summary: 工作經驗摘要\n- education_background: 教育背景列表（每個教育經歷包含 institution, degree, major, duration, gpa, courses, achievements）\n- education_summary: 教育背景摘要\n- achievements: 成就列表\n- achievements_summary: 成就摘要\n- missing_content: 缺失內容分析（包含 critical_missing, recommended_additions, impact_analysis, priority_suggestions）\n- scores: 評分列表（每個評分包含 category, grade, description, comment, icon, suggestions）\n\n特別注意：\n1. 對於履歷內容，請盡可能保留所有詳細資訊\n2. 僅整合明確提及的資訊，缺失資料必須留空\n3. 嚴禁基於部分資訊進行推理或產生幻覺\n4. 在 missing_content 中明確指出缺失的關鍵履歷要素\n5. 使用 STAR 原則評估項目和工作經驗的完整性\n\n請確保回傳有效的 JSON 格式。"]
             ]);
 
             const chain = prompt.pipe(this.structuredChatModel);
@@ -731,7 +718,7 @@ ${additionalText ? `\n額外資訊：\n${additionalText}` : ''}
             // Fallback to original manual parsing method
             const prompt = ChatPromptTemplate.fromMessages([
                 ["system", this.config.systemPrompt],
-                ["human", "請分析以下履歷內容：\n\n履歷內容：\n{resume_content}\n\n額外資訊：\n{additional_text}\n\n請嚴格按照上述格式回傳 JSON 結果。"]
+                ["human", "請分析以下履歷內容並以 JSON 格式回傳結果：\n\n履歷內容：\n{resume_content}\n\n額外資訊：\n{additional_text}\n\n請以 JSON 格式回傳分析結果，包含以下欄位：\n- projects: 專案列表（每個專案包含 name, description, technologies, duration, role, contribution）\n- projects_summary: 專案摘要\n- expertise: 技能列表\n- expertise_summary: 技能摘要\n- work_experiences: 工作經驗列表（每個經驗包含 company, position, duration, description, contribution, technologies）\n- work_experiences_summary: 工作經驗摘要\n- education_background: 教育背景列表（每個教育經歷包含 institution, degree, major, duration, gpa, courses, achievements）\n- education_summary: 教育背景摘要\n- achievements: 成就列表\n- achievements_summary: 成就摘要\n- missing_content: 缺失內容分析（包含 critical_missing, recommended_additions, impact_analysis, priority_suggestions）\n- scores: 評分列表（每個評分包含 category, grade, description, comment, icon, suggestions）\n\n特別注意：\n1. 對於履歷內容，請盡可能保留所有詳細資訊\n2. 僅整合明確提及的資訊，缺失資料必須留空\n3. 嚴禁基於部分資訊進行推理或產生幻覺\n4. 在 missing_content 中明確指出缺失的關鍵履歷要素\n5. 使用 STAR 原則評估項目和工作經驗的完整性\n\n請嚴格按照上述格式回傳 JSON 結果。"]
             ]);
 
             const chain = prompt.pipe(this.chatModel);

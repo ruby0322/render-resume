@@ -5,11 +5,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { analyzeDocuments } from "@/lib/api/resume-analysis";
 import type { ResumeAnalysisResult } from "@/lib/types/resume-analysis";
 import {
-    ArrowRight,
-    Award,
-    Briefcase,
-    Code,
-    FileText
+  ArrowRight,
+  Award,
+  Briefcase,
+  Code,
+  FileText,
+  GraduationCap
 } from "lucide-react";
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
@@ -59,12 +60,12 @@ export default function AnalyzePage() {
       description: '組織工作經驗和項目經歷...',
       icon: Briefcase,
     },
-    // {
-    //   id: 'profile',
-    //   title: '個人檔案',
-    //   description: '生成個人簡介和職業概要...',
-    //   icon: User,
-    // }
+    {
+      id: 'profile',
+      title: '學習經歷',
+      description: '提取學習經歷和學習成果...',
+      icon: GraduationCap,
+    }
   ];
 
   // Helper function to generate user-friendly error messages
@@ -143,7 +144,7 @@ export default function AnalyzePage() {
             return prev;
           }
         });
-      }, 3000);
+      }, 2500);
 
       console.log('🤖 [Analyze Page] Calling analyzeDocuments API');
       // 執行實際的文檔分析

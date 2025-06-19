@@ -40,6 +40,13 @@ export interface AnalysisScore {
     suggestions: string[];
 }
 
+export interface MissingContent {
+    critical_missing: string[];
+    recommended_additions: string[];
+    impact_analysis: string;
+    priority_suggestions: string[];
+}
+
 export interface ResumeAnalysisResult {
     projects: Project[];
     expertise: string[];
@@ -51,6 +58,7 @@ export interface ResumeAnalysisResult {
     education_summary: string;
     achievements: string[];
     achievements_summary: string;
+    missing_content?: MissingContent;
     scores?: AnalysisScore[];
 }
 

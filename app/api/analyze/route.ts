@@ -1,9 +1,9 @@
-import type { DocumentUpload } from '@/lib/openai-client';
-import { createOpenAIClient, processTextFile, SUPPORTED_FILE_TYPES, validateFileType } from '@/lib/openai-client';
+import type { DocumentUpload } from '@/lib/openai-client-native';
+import { createNativeOpenAIClient, processTextFile, SUPPORTED_FILE_TYPES, validateFileType } from '@/lib/openai-client-native';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(request: NextRequest) {
-    console.log('🚀 [API] POST /api/analyze - Request received');
+    console.log('🚀 [API] POST /api/analyze - Request received (using Native OpenAI Client)');
     
     try {
         const contentType = request.headers.get('content-type') || '';
@@ -31,8 +31,8 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        console.log('🤖 [API] Creating OpenAI client');
-        const client = createOpenAIClient(apiKey);
+        console.log('🤖 [API] Creating Native OpenAI client');
+        const client = createNativeOpenAIClient(apiKey);
 
         // 如果提供了自定義提示，使用自定義分析
         if (systemPrompt && userPrompt) {
@@ -175,8 +175,8 @@ async function handleFileUpload(request: NextRequest) {
             console.log(`✅ [API] Document prepared: ${file.name}`);
         }
 
-        console.log('🤖 [API] Creating OpenAI client for document analysis');
-        const client = createOpenAIClient(apiKey);
+        console.log('🤖 [API] Creating Native OpenAI client for document analysis');
+        const client = createNativeOpenAIClient(apiKey);
         
         console.log('🚀 [API] Starting document analysis');
         const result = await client.analyzeDocuments({
@@ -201,14 +201,14 @@ async function handleFileUpload(request: NextRequest) {
         });
 
     } catch (error) {
-        console.error('❌ [API] File upload analysis error:', error);
+        console.error('❌ [API] File upload error:', error);
         if (error instanceof Error) {
             console.error('❌ [API] Error message:', error.message);
             console.error('❌ [API] Error stack:', error.stack);
         }
         return NextResponse.json(
             { 
-                error: '文檔分析失敗',
+                error: '文件分析失敗',
                 details: error instanceof Error ? error.message : '未知錯誤'
             },
             { status: 500 }
