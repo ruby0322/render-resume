@@ -1,18 +1,42 @@
 "use client";
 
+import { useAuth } from "@/components/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
 import { AnalysisScore, LetterGrade } from "@/lib/types/resume-analysis";
+import { cn } from "@/lib/utils";
+import html2canvas from "html2canvas";
+import { Check, Copy, Download, Eye, Share2, X } from "lucide-react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 
 interface AnalysisScoresProps {
   scores: AnalysisScore[];
 }
 
+// 解析 AI 評語的函數
+const parseAIComment = (comment: string) => {
+  // 使用正則表達式提取不同段落，避免使用 s 標志
+  const reasoningMatch = comment.match(/【推理過程】([\s\S]*?)(?=【|$)/);
+  const scoreMatch = comment.match(/【最終評分】([\s\S]*?)(?=【|$)/);
+  const suggestionsMatch = comment.match(/【改進建議】([\s\S]*?)(?=【|$)/);
+
+  return {
+    reasoning: reasoningMatch ? reasoningMatch[1].trim() : '',
+    finalScore: scoreMatch ? scoreMatch[1].trim() : '',
+    suggestions: suggestionsMatch ? suggestionsMatch[1].trim() : '',
+    original: comment // 保留原始評語作為備份
+  };
+};
+
 export function AnalysisScores({ scores }: AnalysisScoresProps) {
   const router = useRouter();
+  const shareCardRef = useRef<HTMLDivElement>(null);
+  const { user } = useAuth();
   
   // Convert letter grades to numerical values for calculations
   const gradeToNumber = (grade: LetterGrade): number => {
@@ -54,6 +78,12 @@ export function AnalysisScores({ scores }: AnalysisScoresProps) {
   const [animatedOverallScore, setAnimatedOverallScore] = useState(0);
   const [animatedScores, setAnimatedScores] = useState<number[]>(new Array(scores.length).fill(0));
   const [isVisible, setIsVisible] = useState(false);
+  
+  // Share states
+  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [showPreviewDialog, setShowPreviewDialog] = useState(false);
+  const [previewImageUrl, setPreviewImageUrl] = useState<string>('');
 
   // Animation effects
   useEffect(() => {
@@ -110,6 +140,158 @@ export function AnalysisScores({ scores }: AnalysisScoresProps) {
     };
   }, [overallNumericalScore, scores]);
 
+  // Share functions
+  const generateShareText = () => {
+    const gradeEmoji = getGradeEmoji(overallGrade);
+    // 從 user 對象獲取用戶名字，優先順序：user_metadata.full_name > user_metadata.name > email 的用戶名部分
+    const userName = user?.user_metadata?.full_name || 
+                     user?.user_metadata?.name || 
+                     user?.user_metadata?.display_name ||
+                     (user?.email ? user.email.split('@')[0] : '我');
+    
+    return `${userName}的履歷在 RenderResume 上拿到 ${overallGrade} 評級！${gradeEmoji} 你能贏過我嗎？快來試試看吧！✨\n\n馬上測試你的履歷：\nhttps://www.render-resume.com`;
+  };
+
+  const getGradeEmoji = (grade: LetterGrade) => {
+    if (['A+', 'A', 'A-'].includes(grade)) return '🏆';
+    if (['B+', 'B', 'B-'].includes(grade)) return '🎯';
+    if (['C+', 'C', 'C-'].includes(grade)) return '📈';
+    return '💪';
+  };
+
+  const handleCopyText = async () => {
+    try {
+      await navigator.clipboard.writeText(generateShareText());
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+      toast.success('複製成功', {
+        description: '已複製到剪貼簿，快分享給你的朋友們吧！',
+        duration: 2000,
+        position: 'bottom-right',
+        icon: '🔗'
+      });
+    } catch (err) {
+      console.error('複製失敗:', err);
+    }
+  };
+
+  const handleShareText = async () => {
+    const shareText = generateShareText();
+    
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          text: shareText,
+        });
+      } catch {
+        await handleCopyText();
+      }
+    } else {
+      await handleCopyText();
+    }
+  };
+
+  const handlePreviewImage = async () => {
+    if (!shareCardRef.current) return;
+    
+    setIsGeneratingImage(true);
+    try {
+      // 暫時移動元素到可見位置進行截圖
+      const element = shareCardRef.current;
+      const originalStyle = {
+        position: element.style.position,
+        top: element.style.top,
+        left: element.style.left,
+        zIndex: element.style.zIndex
+      };
+      
+      // 移動到可見但不影響佈局的位置
+      element.style.position = 'fixed';
+      element.style.top = '0px';
+      element.style.left = '0px';
+      element.style.zIndex = '9999';
+      
+      // 等待一小段時間確保樣式渲染完成
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      const canvas = await html2canvas(element, {
+        backgroundColor: '#ffffff',
+        scale: 2,
+        useCORS: true,
+        allowTaint: false,
+        foreignObjectRendering: false,
+        logging: false,
+        width: 400,
+        height: element.scrollHeight
+      });
+      
+      // 恢復原始位置
+      element.style.position = originalStyle.position;
+      element.style.top = originalStyle.top;
+      element.style.left = originalStyle.left;
+      element.style.zIndex = originalStyle.zIndex;
+      
+      // 設置預覽圖片並顯示對話框
+      const imageUrl = canvas.toDataURL('image/png', 1.0);
+      setPreviewImageUrl(imageUrl);
+      setShowPreviewDialog(true);
+      
+    } catch {
+      toast.error('圖片生成失敗', {
+        description: '無法生成分享圖片，請稍後再試',
+        duration: 3000,
+        position: 'bottom-right',
+        icon: '❌'
+      });
+    } finally {
+      setIsGeneratingImage(false);
+    }
+  };
+
+  const handleDownloadImage = () => {
+    if (!previewImageUrl) return;
+    
+    const link = document.createElement('a');
+    link.download = `RenderResume-${overallGrade}-evaluation.png`;
+    link.href = previewImageUrl;
+    link.click();
+    
+    toast.success('圖片已下載', {
+      description: '分享圖片已成功下載到您的設備',
+      duration: 3000,
+      position: 'bottom-right',
+      icon: '📸'
+    });
+    
+    setShowPreviewDialog(false);
+  };
+
+  const handleShareImage = async () => {
+    if (!previewImageUrl) return;
+    
+    try {
+      // 將 base64 轉換為 blob
+      const response = await fetch(previewImageUrl);
+      const blob = await response.blob();
+      const file = new File([blob], `RenderResume-${overallGrade}-evaluation.png`, { type: 'image/png' });
+      
+      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          title: 'RenderResume 履歷評分結果',
+          files: [file]
+        });
+        setShowPreviewDialog(false);
+      } else {
+        // Fallback 到下載
+        handleDownloadImage();
+      }
+    } catch (err) {
+      console.error('分享圖片失敗:', err);
+      // Fallback 到下載
+      handleDownloadImage();
+    }
+  };
+
   const handleStartChat = () => {
     router.push('/smart-chat');
   };
@@ -126,10 +308,11 @@ export function AnalysisScores({ scores }: AnalysisScoresProps) {
   };
 
   const getGradeComment = (grade: LetterGrade) => {
-    if (['A+', 'A', 'A-'].includes(grade)) return "您的履歷整體品質很不錯！";
-    if (['B+', 'B', 'B-'].includes(grade)) return "還有一些地方可以進一步優化";
-    if (['C+', 'C', 'C-'].includes(grade)) return "您的履歷需要進行較大程度的改進";
-    return "履歷品質嚴重不足，需要全面重新整理";
+    const displayName = user?.user_metadata.name;
+    if (['A+', 'A', 'A-'].includes(grade)) return `${displayName} 的履歷整體品質很不錯！`;   
+    if (['B+', 'B', 'B-'].includes(grade)) return `${displayName} 的履歷還有一些地方可以進一步優化`;
+    if (['C+', 'C', 'C-'].includes(grade)) return `${displayName} 的履歷需要進行較大程度的改進`;
+    return `${displayName} 的履歷品質嚴重不足，需要全面重新整理`;
   };
 
   const getGradeColors = (grade: LetterGrade) => {
@@ -158,6 +341,58 @@ export function AnalysisScores({ scores }: AnalysisScoresProps) {
 
   return (
     <div className={`space-y-6 transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+       {/* 分享功能 */}
+      <Card className={`bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-950/30 dark:to-pink-950/30 border-purple-200 dark:border-purple-800 transition-all duration-700 delay-2500 ${
+        isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+      }`}>
+        <CardHeader>
+          <CardTitle className="text-center text-purple-800 dark:text-purple-200 flex items-center justify-center">
+            <Share2 className="w-5 h-5 mr-2" />
+            分享你的成果
+          </CardTitle>
+          <CardDescription className="text-center">
+            炫耀一下你的履歷評分，讓朋友們也來挑戰看看！
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Button 
+              onClick={handleShareText}
+              className="bg-purple-600 hover:bg-purple-700 text-white shadow-lg hover:shadow-xl transition-all flex items-center"
+            >
+              {copied ? (
+                <>
+                  <Check className="w-4 h-4 mr-2" />
+                  已複製！
+                </>
+              ) : (
+                <>
+                  <Copy className="w-4 h-4 mr-2" />
+                  分享文字
+                </>
+              )}
+            </Button>
+            <Button 
+              onClick={handlePreviewImage}
+              variant="outline"
+              disabled={isGeneratingImage}
+              className="border-purple-300 text-purple-700 hover:bg-purple-50 dark:border-purple-600 dark:text-purple-300 dark:hover:bg-purple-900/30 flex items-center"
+            >
+              {isGeneratingImage ? (
+                <>
+                  <div className="w-4 h-4 mr-2 border-2 border-purple-600 border-t-transparent rounded-full animate-spin"></div>
+                  生成中...
+                </>
+              ) : (
+                <>
+                  <Download className="w-4 h-4 mr-2" />
+                  生成預覽圖片
+                </>
+              )}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
       {/* Overall Grade */}
       <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
         <CardHeader className="text-center">
@@ -198,14 +433,9 @@ export function AnalysisScores({ scores }: AnalysisScoresProps) {
                 {numberToGrade(animatedOverallScore)}
               </span>
               <span className="text-sm text-gray-500 dark:text-gray-400">
-                等第制
+                {getGradeLevel(overallGrade)}
               </span>
             </div>
-          </div>
-          <div className={`inline-block px-4 py-2 rounded-full mb-2 ${gradeColors.background} ${gradeColors.stroke} transition-all duration-500 delay-1000 ${isVisible ? 'scale-100' : 'scale-95'}`}>
-            <p className="text-lg font-bold">
-              {getGradeLevel(overallGrade)}
-            </p>
           </div>
           <p className="text-gray-600 dark:text-gray-300 max-w-md mx-auto transition-all duration-500 delay-1200">
             {getGradeComment(overallGrade)}
@@ -219,6 +449,8 @@ export function AnalysisScores({ scores }: AnalysisScoresProps) {
           const colors = getGradeColors(score.grade);
           const animatedScore = animatedScores[index] || 0;
           const animatedGrade = numberToGrade(animatedScore);
+          const parsedComment = parseAIComment(score.comment);
+          
           return (
             <Card 
               key={index} 
@@ -253,11 +485,55 @@ export function AnalysisScores({ scores }: AnalysisScoresProps) {
                 <p className="text-sm text-gray-600 dark:text-gray-300 mb-3 leading-relaxed">
                   {score.description}
                 </p>
-                <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
-                  <p className="text-sm text-gray-700 dark:text-gray-300">
-                    <span className="font-medium text-gray-900 dark:text-white">AI 評語：</span>
-                    {score.comment}
-                  </p>
+                
+                {/* AI 評語區塊 - 分開顯示 */}
+                <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 space-y-3">
+                  <div className="flex items-center mb-2">
+                    <span className="font-medium text-gray-900 dark:text-white">🤖 AI 評語</span>
+                  </div>
+                  
+                  {/* 推理過程 */}
+                  {parsedComment.reasoning && (
+                    <div className="border-l-4 border-cyan-600 pl-3">
+                      <h4 className="text-sm font-semibold text-cyan-600 dark:text-cyan-400 mb-1">
+                        推理過程
+                      </h4>
+                      <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+                        {parsedComment.reasoning}
+                      </p>
+                    </div>
+                  )}
+                  
+                  {/* 最終評分 */}
+                  {parsedComment.finalScore && (
+                    <div className="border-l-4 border-cyan-600 pl-3">
+                      <h4 className="text-sm font-semibold text-cyan-600 dark:text-cyan-400 mb-1">
+                        最終評分
+                      </h4>
+                      <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+                        {parsedComment.finalScore}
+                      </p>
+                    </div>
+                  )}
+                  
+                  {/* 改進建議 */}
+                  {parsedComment.suggestions && (
+                    <div className="border-l-4 border-cyan-600 pl-3">
+                      <h4 className="text-sm font-semibold text-cyan-600 dark:text-cyan-400 mb-1">
+                        改進建議
+                      </h4>
+                      <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+                        {parsedComment.suggestions}
+                      </p>
+                    </div>
+                  )}
+                  
+                  {/* 如果沒有匹配到格式化內容，顯示原始評語 */}
+                  {!parsedComment.reasoning && !parsedComment.finalScore && !parsedComment.suggestions && (
+                    <p className="text-sm text-gray-700 dark:text-gray-300">
+                      {parsedComment.original}
+                    </p>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -318,6 +594,157 @@ export function AnalysisScores({ scores }: AnalysisScoresProps) {
           )}
         </CardContent>
       </Card>
+
+      {/* 隱藏的分享卡片 - 用於匯出圖片 */}
+      <div 
+        ref={shareCardRef}
+        className="absolute -top-[9999px] left-0 w-[400px] bg-white shadow-xl rounded-2xl overflow-hidden"
+        style={{ 
+          fontFamily: 'system-ui, -apple-system, sans-serif',
+          zIndex: -1
+        }}
+      >
+        {/* Header with gradient background */}
+        <div className="bg-cyan-600 text-white py-1 px-4">
+          <div className="flex items-center justify-start space-x-3">
+            <div className="w-8 h-8 flex items-center justify-center">
+              <span className="text-white font-bold text-lg">✨</span>
+            </div>
+            <div className="text-left">
+              <h1 className="text-lg   text-white leading-tight">RenderResume</h1>
+              <p className="text-cyan-100 text-xs leading-tight">懶得履歷．AI 履歷生成器</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="p-6 space-y-4">
+          {/* Overall Grade Display */}
+          <div className="text-center">
+            <div className="bg-gray-50 rounded-2xl p-6 border border-gray-200">
+              <h2 className="text-lg font-semibold text-gray-800 mb-4">總體評級</h2>
+              <div className="flex items-center justify-center">
+                <div className="relative">
+                  {/* Circular progress background */}
+                  <div className="w-28 h-28 rounded-full border-4 border-gray-200 flex items-center justify-center bg-white">
+                    <div className={cn('w-24 h-24 rounded-full border-4 flex items-center justify-center',
+                      ['A+', 'A', 'A-'].includes(overallGrade) && 'border-green-500 bg-green-50',
+                      ['B+', 'B', 'B-'].includes(overallGrade) && 'border-orange-500 bg-orange-50',
+                      ['C+', 'C', 'C-'].includes(overallGrade) && 'border-red-500 bg-red-50'
+                    )}
+                    >  
+                      <div className="text-center w-full -translate-y-2">
+                        <div className={cn('text-2xl font-bold leading-none', {
+                          'text-green-600': ['A+', 'A', 'A-'].includes(overallGrade),
+                          'text-orange-600': ['B+', 'B', 'B-'].includes(overallGrade),
+                          'text-red-600': ['C+', 'C', 'C-'].includes(overallGrade)
+                        })}>
+                          {overallGrade}
+                        </div>
+                        <div className={`text-xs font-medium leading-none mt-1 ${
+                          ['A+', 'A', 'A-'].includes(overallGrade) ? 'text-green-600' :
+                          ['B+', 'B', 'B-'].includes(overallGrade) ? 'text-orange-600' :
+                          'text-red-600'
+                        }`}>
+                          {getGradeLevel(overallGrade)}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="mt-3">
+                <div className="text-xs text-gray-500">{getGradeEmoji(overallGrade)} {getGradeComment(overallGrade)}</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Detailed Scores */}
+          <div>
+            <div className="grid grid-cols-2 gap-3">
+              {scores.slice(0, 4).map((score, index) => {
+                const colors = getGradeColors(score.grade);
+                return (
+                  <div key={index} className="bg-gray-50 rounded-xl p-4 text-center border border-gray-200">
+                    <div className="text-xl mb-2">{score.icon}</div>
+                    <div className="text-xs font-medium text-gray-700 mb-2 leading-tight">{score.category}</div>
+                    <div className={`text-lg font-bold ${colors.stroke}`}>
+                      {score.grade}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Call to action */}
+          <div className="text-center pt-4 border-t border-gray-200">
+            <p className="text-sm text-gray-600 mb-2">你也想測試你的履歷嗎？快上 RenderResume 看看吧！</p>
+            <div className="px-4 py-2 rounded-lg inline-block">
+              <p className="font-semibold text-sm">
+                www.render-resume.com
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer watermark */}
+        <div className="px-6 pt-3 pb-0 text-center">
+          <p className="text-md font-medium text-gray-500">
+            © RenderResume - AI 履歷生成器
+          </p>
+        </div>
+      </div>
+
+      {/* 預覽對話框 */}
+      <Dialog open={showPreviewDialog} onOpenChange={setShowPreviewDialog}>
+        <DialogContent className="max-w-md mx-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center">
+              <Eye className="w-5 h-5 mr-2" />
+              預覽分享圖片
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="flex justify-center py-4">
+            {previewImageUrl && (
+              <Image
+                src={previewImageUrl} 
+                alt="履歷評分分享圖片" 
+                width={400}
+                height={0}
+                className="max-w-full h-auto rounded-lg shadow-lg border border-gray-200"
+                style={{ maxHeight: '400px', width: 'auto' }}
+              />
+            )}
+          </div>
+          
+          <DialogFooter className="flex flex-col sm:flex-row gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setShowPreviewDialog(false)}
+              className="flex items-center"
+            >
+              <X className="w-4 h-4 mr-2" />
+              取消
+            </Button>
+            <Button
+              onClick={handleDownloadImage}
+              className="bg-cyan-600 hover:bg-cyan-700 text-white flex items-center"
+            >
+              <Download className="w-4 h-4 mr-2" />
+              下載圖片
+            </Button>
+            <Button
+              onClick={handleShareImage}
+              variant="outline"
+              className="border-cyan-600 text-cyan-600 hover:bg-cyan-50 flex items-center"
+            >
+              <Share2 className="w-4 h-4 mr-2" />
+              分享圖片
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 } 

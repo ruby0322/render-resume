@@ -7,6 +7,7 @@ import type { ResumeAnalysisResult } from "@/lib/types/resume-analysis";
 import {
   ArrowRight,
   Award,
+  Bot,
   Briefcase,
   Code,
   FileText,
@@ -65,6 +66,12 @@ export default function AnalyzePage() {
       title: '學習經歷',
       description: '提取學習經歷和學習成果...',
       icon: GraduationCap,
+    },
+    {
+      id: 'recommendation',
+      title: '評分與建議',
+      description: '評分您的履歷，並提供建議...',
+      icon: Bot,
     }
   ];
 
@@ -144,7 +151,7 @@ export default function AnalyzePage() {
             return prev;
           }
         });
-      }, 2500);
+      }, 4500);
 
       console.log('🤖 [Analyze Page] Calling analyzeDocuments API');
       // 執行實際的文檔分析

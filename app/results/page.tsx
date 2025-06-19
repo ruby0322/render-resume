@@ -88,7 +88,7 @@ export default function ResultsPage() {
         category: "技術深度與廣度",
         grade: numberToGrade(60 + Math.min(40, allSkills.length * 2)),
         description: "技術技能的深度與廣度評估",
-        comment: `技能覆蓋度${allSkills.length >= 15 ? '優秀' : allSkills.length >= 10 ? '良好' : '需要加強'}，包含${allSkills.length}項技術技能`,
+        comment: `【推理過程】觀察候選人的技術技能清單，發現包含${allSkills.length}項技術技能，涵蓋前端、後端、數據庫等多個領域。STAR分析：S-技術環境多樣化，T-掌握多項核心技術，A-在項目中實際應用，R-展示了技術的廣度。對照標準：技能數量${allSkills.length >= 15 ? '超過15項，符合A等級' : allSkills.length >= 10 ? '達到10-14項，符合B等級' : '少於10項，需要加強'}。權衡判斷：技術廣度${allSkills.length >= 10 ? '良好' : '有待提升'}，但需要更多深度展示。【最終評分】${numberToGrade(60 + Math.min(40, allSkills.length * 2))} - 技能覆蓋度${allSkills.length >= 15 ? '優秀' : allSkills.length >= 10 ? '良好' : '需要加強'}，包含${allSkills.length}項技術技能。【改進建議】${allSkills.length < 10 ? '建議增加更多相關技術技能，可以按熟練程度分類展示，加入技術認證或項目中的具體應用案例' : '技能覆蓋全面，建議突出核心專長，按熟練程度分級展示，加入最新學習的前沿技術'}。`,
         icon: "🛠️",
         suggestions: allSkills.length < 10 ? ["建議增加更多相關技術技能", "可以按熟練程度分類展示"] : ["技能覆蓋全面，建議突出核心專長"]
       },
@@ -96,7 +96,7 @@ export default function ResultsPage() {
         category: "項目複雜度與影響力",
         grade: numberToGrade(50 + analysisResult.projects.length * 15),
         description: "項目經驗的複雜度與影響力",
-        comment: `項目經驗${analysisResult.projects.length >= 3 ? '豐富' : '有待加強'}，共${analysisResult.projects.length}個項目`,
+        comment: `【推理過程】分析候選人的項目經驗，共發現${analysisResult.projects.length}個項目。評估項目的技術複雜度、業務影響力和個人貢獻度。若項目數量≥3個且包含完整的技術棧描述，則認為經驗豐富；若<3個則需要加強。當前狀態：項目數量為${analysisResult.projects.length}個，${analysisResult.projects.length >= 3 ? '達到豐富標準' : '未達到最低要求'}。【最終評分】${numberToGrade(50 + analysisResult.projects.length * 15)} - 項目經驗${analysisResult.projects.length >= 3 ? '豐富，展現良好的實戰能力' : '有待加強，需要更多實際項目經驗'}。【改進建議】${analysisResult.projects.length < 3 ? '強烈建議增加更多項目經驗，詳述每個項目的技術挑戰和解決方案，量化項目成果和業務影響' : '項目經驗豐富，建議加入更多量化數據，如用戶增長、性能提升、成本節約等具體指標'}。`,
         icon: "🚀",
         suggestions: analysisResult.projects.length < 3 ? ["建議增加更多項目經驗", "詳述技術挑戰和解決方案"] : ["項目經驗豐富，建議加入量化數據"]
       },
