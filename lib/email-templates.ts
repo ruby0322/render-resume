@@ -224,8 +224,7 @@ export const emailTemplates = {
         <p><strong>重要提醒：</strong>此信件將於 1 小時後過期，以確保安全性。</p>
         <p>如果您沒有建立 RenderResume 帳戶，您可以安全地忽略此電子郵件。</p>
         <p style="margin-top: 20px;">
-          需要協助？回覆此電子郵件或造訪我們的 
-          <a href="${process.env.NEXT_PUBLIC_APP_URL}/support" style="color: ${BRAND_COLORS.primary};">支援中心</a>。
+          需要協助？回覆此電子郵件，我們很樂意為您提供協助！
         </p>
       </div>
     `;
@@ -278,8 +277,7 @@ export const emailTemplates = {
         <p><strong>安全提示：</strong>請勿與任何人分享此登入代碼。</p>
         <p>此登入連結將於 1 小時後過期以確保您的安全。</p>
         <p style="margin-top: 20px;">
-          遇到問題？聯絡我們的 
-          <a href="${process.env.NEXT_PUBLIC_APP_URL}/support" style="color: ${BRAND_COLORS.primary};">支援團隊</a>。
+          遇到問題？回覆此電子郵件，我們很樂意為您提供協助！
         </p>
       </div>
     `;
@@ -335,8 +333,7 @@ export const emailTemplates = {
         <p><strong>沒有請求此項？</strong>如果您沒有請求密碼重設，您可以安全地忽略此電子郵件。您的帳戶仍然安全。</p>
         <p>此重設連結將於 1 小時後過期以確保安全性。</p>
         <p style="margin-top: 20px;">
-          有疑問？聯絡我們的 
-          <a href="${process.env.NEXT_PUBLIC_APP_URL}/support" style="color: ${BRAND_COLORS.primary};">安全團隊</a>。
+          有疑問？回覆此電子郵件，我們很樂意為您提供協助！
         </p>
       </div>
     `;
@@ -472,17 +469,17 @@ export const emailTemplates = {
             想了解更多？探索我們的功能介紹：
           </p>
           
-          <a href="${process.env.NEXT_PUBLIC_APP_URL}" class="cta-button">
+          <a href="https://www.render-resume.com/help" class="cta-button">
             🔍 探索更多功能
           </a>
         </div>
 
         <div style="background-color: #ecfeff; border-left: 4px solid ${BRAND_COLORS.primary}; padding: 20px; margin: 30px 0; border-radius: 0 8px 8px 0;">
-          <h3 style="color: ${BRAND_COLORS.primary}; margin-bottom: 10px;">💡 小貼士</h3>
+          <h3 style="color: ${BRAND_COLORS.primary}; margin-bottom: 10px;">💡 小撇步</h3>
           <div style="margin: 0; color: ${BRAND_COLORS.text};">
             在等待期間，您可以：<br>
-            • 關注我們的<a href="${process.env.NEXT_PUBLIC_APP_URL}/blog" style="color: ${BRAND_COLORS.primary};">部落格</a>獲取履歷撰寫技巧<br>
-            • 瀏覽<a href="${process.env.NEXT_PUBLIC_APP_URL}/faq" style="color: ${BRAND_COLORS.primary};">常見問題</a>了解更多功能細節<br>
+            • 關注我們的<a href="https://www.threads.net/@newbie.founder" style="color: ${BRAND_COLORS.primary};">部落格</a>獲取履歷撰寫技巧<br>
+            • 瀏覽<a href="https://www.render-resume.com/faq" style="color: ${BRAND_COLORS.primary};">常見問題</a>了解更多功能細節<br>
             • 準備您想要分析的履歷文件（支援 PDF 格式）
           </div>
         </div>
@@ -495,8 +492,7 @@ export const emailTemplates = {
           • 加入時間：${new Date().toLocaleDateString('zh-TW')}
         </p>
         <p style="margin-top: 20px;">
-          有任何問題嗎？回覆此電子郵件或造訪我們的 
-          <a href="${process.env.NEXT_PUBLIC_APP_URL}/support" style="color: ${BRAND_COLORS.primary};">支援中心</a>。我們很樂意為您提供協助！
+          有任何問題嗎？回覆此電子郵件，我們很樂意為您提供協助！
         </p>
         <p style="margin-top: 15px; font-style: italic;">
           感謝您對 Render Resume 的信任與支持！🙏
@@ -522,7 +518,7 @@ export const emailTemplates = {
 
 我們會在 一個月內 發送您的專屬邀請碼。
 
-探索更多功能：${process.env.NEXT_PUBLIC_APP_URL}
+探索更多功能：https://www.render-resume.com
 
 聯絡資訊：
 • 電子郵件：${data.userEmail}
@@ -541,7 +537,7 @@ export function getEmailTemplate(
   userEmail: string,
   userName?: string
 ): EmailTemplate {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://www.render-resume.com';
   const data: EmailTemplateData = {
     token,
     redirectTo: redirectTo || baseUrl,
@@ -617,7 +613,7 @@ export async function getReactEmailTemplate(
         const { SignupEmailTemplate } = await import('@/components/emails/SignupEmailTemplate');
         return React.createElement(SignupEmailTemplate, {
           token,
-          redirectTo: redirectTo || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
+          redirectTo: redirectTo || process.env.NEXT_PUBLIC_APP_URL || 'https://www.render-resume.com',
           userName
         });
       }

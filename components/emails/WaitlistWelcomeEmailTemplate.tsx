@@ -61,19 +61,19 @@ export const WaitlistWelcomeEmailTemplate: React.FC<WaitlistWelcomeEmailTemplate
             想了解更多？探索我們的功能介紹：
           </Text>
           
-          <Link href={`${process.env.NEXT_PUBLIC_APP_URL}`} style={emailStyles.ctaButton}>
+          <Link target='_blank' href='https://www.render-resume.com' style={emailStyles.ctaButton}>
             🔍 探索更多功能
           </Link>
         </Section>
 
         <Section style={emailStyles.infoBox}>
           <Heading as="h3" style={{ color: BRAND_COLORS.primary, marginBottom: '10px', margin: '0 0 10px 0' }}>
-            💡 小貼士
+            💡 小撇步
           </Heading>
           <Text style={{ margin: 0, color: BRAND_COLORS.text }}>
             在等待期間，您可以：<br />
-            • 關注我們的<Link href={`${process.env.NEXT_PUBLIC_APP_URL}/blog`} style={emailStyles.link}>部落格</Link>獲取履歷撰寫技巧<br />
-            • 瀏覽<Link href={`${process.env.NEXT_PUBLIC_APP_URL}/faq`} style={emailStyles.link}>常見問題</Link>了解更多功能細節<br />
+            • 關注我們的<Link target='_blank' href='https://www.threads.com/@newbie.founder' style={emailStyles.link}>部落格</Link>獲取履歷撰寫技巧<br />
+            • 瀏覽<Link target='_blank' href='https://www.render-resume.com/faq' style={emailStyles.link}>常見問題</Link>了解更多功能細節<br />
             • 準備您想要分析的履歷文件（支援 PDF 格式）
           </Text>
         </Section>
@@ -89,7 +89,7 @@ export const WaitlistWelcomeEmailTemplate: React.FC<WaitlistWelcomeEmailTemplate
         </Text>
         <Text style={{ ...emailStyles.footerText, marginTop: '20px' }}>
           有任何問題嗎？回覆此電子郵件或造訪我們的{' '}
-          <Link href={`${process.env.NEXT_PUBLIC_APP_URL}/support`} style={emailStyles.link}>
+          <Link target='_blank' href='https://www.render-resume.com/support' style={emailStyles.link}>
             支援中心
           </Link>。我們很樂意為您提供協助！
         </Text>
