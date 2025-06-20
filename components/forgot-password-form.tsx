@@ -1,7 +1,5 @@
 "use client";
 
-import { cn } from "@/lib/utils";
-import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -12,6 +10,8 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { createClient } from "@/lib/supabase/client";
+import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { useState } from "react";
 
@@ -38,7 +38,7 @@ export function ForgotPasswordForm({
       if (error) throw error;
       setSuccess(true);
     } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : "An error occurred");
+      setError(error instanceof Error ? error.message : "發生錯誤，請稍後再試");
     } finally {
       setIsLoading(false);
     }
@@ -49,51 +49,78 @@ export function ForgotPasswordForm({
       {success ? (
         <Card>
           <CardHeader>
-            <CardTitle className="text-2xl">Check Your Email</CardTitle>
-            <CardDescription>Password reset instructions sent</CardDescription>
+            <CardTitle className="text-2xl">檢查您的電子郵件</CardTitle>
+            <CardDescription>密碼重設指示已發送</CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-muted-foreground">
-              If you registered using your email and password, you will receive
-              a password reset email.
-            </p>
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                如果您使用電子郵件和密碼註冊，您將收到密碼重設郵件。
+              </p>
+              <div className="text-center">
+                <Link
+                  href="/auth/login"
+                  className="text-sm text-cyan-600 hover:text-cyan-700 underline underline-offset-4"
+                >
+                  返回登入
+                </Link>
+              </div>
+            </div>
           </CardContent>
         </Card>
       ) : (
         <Card>
           <CardHeader>
-            <CardTitle className="text-2xl">Reset Your Password</CardTitle>
+            <CardTitle className="text-2xl">重設密碼</CardTitle>
             <CardDescription>
-              Type in your email and we&apos;ll send you a link to reset your
-              password
+              輸入您的電子郵件地址，我們將發送重設密碼的連結給您
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleForgotPassword}>
               <div className="flex flex-col gap-6">
                 <div className="grid gap-2">
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="email">電子郵件</Label>
                   <Input
                     id="email"
                     type="email"
-                    placeholder="m@example.com"
+                    placeholder="example@gmail.com"
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
+                    disabled={isLoading}
                   />
                 </div>
-                {error && <p className="text-sm text-red-500">{error}</p>}
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? "Sending..." : "Send reset email"}
+                
+                {error && (
+                  <div className="p-3 text-sm text-red-700 bg-red-50 dark:text-red-400 dark:bg-red-950 rounded-lg">
+                    {error}
+                  </div>
+                )}
+                
+                <Button 
+                  type="submit" 
+                  className="w-full bg-cyan-600 hover:bg-cyan-700" 
+                  disabled={isLoading || !email}
+                >
+                  {isLoading ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                      發送中...
+                    </>
+                  ) : (
+                    "發送重設郵件"
+                  )}
                 </Button>
               </div>
+              
               <div className="mt-4 text-center text-sm">
-                Already have an account?{" "}
+                已有帳戶？{" "}
                 <Link
                   href="/auth/login"
-                  className="underline underline-offset-4"
+                  className="text-cyan-600 hover:text-cyan-700 underline underline-offset-4"
                 >
-                  Login
+                  立即登入
                 </Link>
               </div>
             </form>

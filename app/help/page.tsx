@@ -1,29 +1,51 @@
+"use client";
+
+import { Slider } from "@/components/ui/slider";
 import {
-    AlertCircle,
-    CheckCircle,
-    Download,
-    FileText,
-    Lightbulb,
-    MessageSquare,
-    Search,
-    Star,
-    Target,
-    Upload
+  AlertCircle,
+  CheckCircle,
+  Download,
+  FileText,
+  Lightbulb,
+  MessageSquare,
+  Search,
+  Star,
+  Target,
+  Upload
 } from "lucide-react";
 import Link from "next/link";
+import { useState } from "react";
 
 export default function HelpPage() {
+  const [gradeValue, setGradeValue] = useState([7]); // 預設為 B+ (index 7)
+
+  const gradeScale = [
+    { grade: "F", label: "不合格", color: "text-red-800", bgColor: "bg-red-100 dark:bg-red-900/30", description: "履歷存在重大缺陷，需要全面重構內容結構與專業呈現" },
+    { grade: "D", label: "嚴重不足", color: "text-red-700", bgColor: "bg-red-100 dark:bg-red-900/30", description: "基礎信息缺失嚴重，專業能力表達不清，急需改善" },
+    { grade: "C-", label: "需大幅改進", color: "text-red-600", bgColor: "bg-red-50 dark:bg-red-900/20", description: "內容組織混亂，缺乏重點突出，建議重新整理" },
+    { grade: "C", label: "需改進", color: "text-red-500", bgColor: "bg-orange-50 dark:bg-orange-900/20", description: "基本信息完整但缺乏亮點，需要加強成果量化" },
+    { grade: "C+", label: "待改進", color: "text-orange-600", bgColor: "bg-orange-50 dark:bg-orange-900/20", description: "結構尚可但內容平淡，建議增加具體案例與數據支撐" },
+    { grade: "B-", label: "合格表現", color: "text-yellow-600", bgColor: "bg-yellow-50 dark:bg-yellow-900/20", description: "滿足基本要求，但缺乏競爭優勢，可進一步優化" },
+    { grade: "B", label: "尚可表現", color: "text-yellow-500", bgColor: "bg-yellow-50 dark:bg-yellow-900/20", description: "內容結構良好，專業能力清晰，但需要更多成就亮點" },
+    { grade: "B+", label: "滿意表現", color: "text-lime-600", bgColor: "bg-lime-50 dark:bg-lime-900/20", description: "履歷內容豐富，專業形象佳，在多數職位中具備競爭力" },
+    { grade: "A-", label: "良好表現", color: "text-green-600", bgColor: "bg-green-50 dark:bg-green-900/20", description: "專業能力突出，成果量化清晰，易獲得面試機會" },
+    { grade: "A", label: "優秀表現", color: "text-emerald-600", bgColor: "bg-emerald-50 dark:bg-emerald-900/20", description: "履歷結構完美，內容充實有力，在競爭中明顯領先" },
+    { grade: "A+", label: "卓越表現", color: "text-emerald-700", bgColor: "bg-emerald-100 dark:bg-emerald-900/30", description: "頂級履歷水準，各維度表現優異，極具吸引力和說服力" }
+  ];
+
+  const currentGrade = gradeScale[gradeValue[0]];
+
   const steps = [
     {
       step: 1,
       icon: Upload,
       title: "上傳履歷",
-      description: "支援 PDF、Word 格式，或直接貼上履歷內容",
+      description: "支援 PDF、圖片格式，或直接貼上履歷內容",
       details: [
         "檔案大小限制：10MB 以內",
         "支援中英文履歷",
         "自動偵測格式並提取內容",
-        "隱私保護：上傳檔案僅用於分析，不會儲存"
+        "隱私保護：測試版僅用於分析且不儲存，正式版將提供安全儲存"
       ]
     },
     {
@@ -104,11 +126,11 @@ export default function HelpPage() {
   const faqs = [
     {
       question: "上傳的履歷會被保存嗎？",
-      answer: "不會。我們非常重視您的隱私，上傳的履歷僅用於分析目的，分析完成後即刻刪除，不會儲存在我們的伺服器上。"
+      answer: "測試版：上傳的履歷僅用於分析目的，分析完成後即刻刪除，不會儲存在我們的伺服器上。正式版：將提供履歷管理與分享功能，您的履歷將被安全儲存，方便您管理多個版本和與雇主分享。我們承諾採用業界最高標準保護您的隱私資料。"
     },
     {
       question: "分析需要多長時間？",
-      answer: "通常在 1-3 分鐘內完成分析。複雜的履歷可能需要稍長時間，但不會超過 5 分鐘。"
+      answer: "通常在 45 秒內完成分析。複雜的履歷可能需要稍長時間，但不會超過 1 分鐘。"
     },
     {
       question: "支援哪些檔案格式？",
@@ -223,6 +245,97 @@ export default function HelpPage() {
                   </ul>
                 </div>
               ))}
+            </div>
+          </section>
+
+          {/* Interactive Grade Scoring System */}
+          <section className="mb-16">
+            <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-8 text-center">
+              等第制評分系統預覽
+            </h2>
+            
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-8 shadow-sm border border-gray-200 dark:border-gray-700 max-w-4xl mx-auto">
+              <div className="text-center mb-6">
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
+                  互動式評分預覽 (F 到 A+ 共 11 級)
+                </h3>
+                <p className="text-gray-600 dark:text-gray-300">
+                  拖拽滑塊或點擊等級，了解評級資訊
+                </p>
+              </div>
+              
+              {/* Interactive Grade Slider */}
+              <div className="space-y-6">
+                <div className="px-4">
+                  <Slider
+                    value={gradeValue}
+                    onValueChange={setGradeValue}
+                    max={10}
+                    min={0}
+                    step={1}
+                    className="w-full"
+                  />
+                  <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
+                    <span>F (最低)</span>
+                    <span>A+ (最高)</span>
+                  </div>
+                </div>
+
+                {/* Current Grade Display */}
+                <div className={`${currentGrade.bgColor} rounded-lg p-6 border-2 transition-all duration-300`}>
+                  <div className="text-center space-y-3">
+                    <div className={`text-4xl font-bold ${currentGrade.color}`}>
+                      {currentGrade.grade}
+                    </div>
+                    <div className={`text-lg font-semibold ${currentGrade.color}`}>
+                      {currentGrade.label}
+                    </div>
+                    <p className="text-gray-700 dark:text-gray-300 max-w-2xl mx-auto leading-relaxed">
+                      {currentGrade.description}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Grade Scale Reference */}
+                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2 mt-6">
+                  {gradeScale.map((item, index) => (
+                    <div 
+                      key={index} 
+                      className={`text-center p-2 rounded transition-all duration-200 cursor-pointer ${
+                        index === gradeValue[0] 
+                          ? `${item.bgColor} shadow-sm` 
+                          : 'hover:bg-gray-100 dark:hover:bg-gray-700'
+                      }`}
+                      onClick={() => setGradeValue([index])}
+                    >
+                      <div className={`text-sm font-bold ${
+                        index === gradeValue[0] ? item.color : 'text-gray-500'
+                      }`}>
+                        {item.grade}
+                      </div>
+                      <div className={`text-xs ${
+                        index === gradeValue[0] ? 'text-gray-700 dark:text-gray-300' : 'text-gray-400'
+                      }`}>
+                        {item.label}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="text-sm text-gray-500 dark:text-gray-400 mt-4 text-center">
+                  💡 拖拽滑塊或點擊等級查看不同評分的詳細說明
+                </div>
+              </div>
+              
+              <div className="mt-8 p-4 bg-cyan-50 dark:bg-cyan-950/30 border border-cyan-200 dark:border-cyan-800 rounded-lg">
+                <h4 className="font-semibold text-gray-900 dark:text-white mb-2">評分標準說明：</h4>
+                <ul className="text-sm text-gray-700 dark:text-gray-300 space-y-1">
+                  <li>• <strong>A+/A/A-</strong>：卓越至良好表現，符合頂級企業標準</li>
+                  <li>• <strong>B+/B/B-</strong>：滿意至合格表現，具備基本競爭力</li>
+                  <li>• <strong>C+/C/C-</strong>：待改進至需改進，建議優化內容</li>
+                  <li>• <strong>D/F</strong>：不足至不合格，需要重大改善</li>
+                </ul>
+              </div>
             </div>
           </section>
 

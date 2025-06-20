@@ -1,15 +1,15 @@
 "use client";
 
 import {
-    ChevronDown,
-    ChevronUp,
-    CreditCard,
-    FileText,
-    HelpCircle,
-    Search,
-    Shield,
-    Users,
-    Zap
+  ChevronDown,
+  ChevronUp,
+  CreditCard,
+  FileText,
+  HelpCircle,
+  Search,
+  Shield,
+  Users,
+  Zap
 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
@@ -65,7 +65,7 @@ export default function FAQPage() {
         },
         {
           question: "STAR 原則重組是什麼？",
-          answer: "STAR 原則是國際認可的經驗描述方法：Situation（情境）- 描述工作背景；Task（任務）- 說明具體任務；Action（行動）- 詳述採取的行動；Result（結果）- 量化成果與影響。我們的 AI 會幫您將工作經驗重新組織成 STAR 格式，讓履歷更有說服力。"
+          answer: "STAR 原則是國際認可的經驗描述方法，由 Amazon、Google 等頂級科技公司廣泛採用：Situation（情境）- 描述工作背景；Task（任務）- 說明具體任務；Action（行動）- 詳述採取的行動；Result（結果）- 量化成果與影響。此方法最初由行為面試專家開發，現已成為 Fortune 500 企業和頂級獵頭公司的標準評估框架。我們的 AI 會幫您將工作經驗重新組織成 STAR 格式，讓履歷更有說服力。"
         },
         {
           question: "分析結果準確嗎？",
@@ -80,7 +80,7 @@ export default function FAQPage() {
       faqs: [
         {
           question: "上傳的履歷會被保存嗎？",
-          answer: "絕對不會！我們非常重視您的隱私安全。上傳的履歷僅用於分析目的，分析完成後會立即從我們的伺服器刪除。我們不會儲存、分享或用於其他目的。"
+          answer: "測試版：上傳的履歷僅用於分析目的，分析完成後會立即從我們的伺服器刪除，不會儲存、分享或用於其他目的。正式版：將提供履歷管理與分享功能，您的履歷將被安全儲存，方便您管理多個版本和與雇主分享。我們承諾採用業界最高標準保護您的隱私資料，所有數據都會經過加密處理。"
         },
         {
           question: "個人資料會如何處理？",
@@ -122,7 +122,7 @@ export default function FAQPage() {
       faqs: [
         {
           question: "如何註冊帳戶？",
-          answer: "點擊「註冊」按鈕，填寫電子郵件地址並設定密碼即可。我們會發送驗證郵件到您的信箱，請點擊驗證連結完成註冊流程。"
+          answer: "點擊「註冊」按鈕，使用 Google 帳號註冊，或填寫電子郵件地址並設定密碼即可。我們會發送驗證郵件到您的信箱，請點擊驗證連結完成註冊流程。"
         },
         {
           question: "忘記密碼怎麼辦？",

@@ -1,3 +1,5 @@
+"use client";
+
 import Footer from "@/components/footer";
 import { Button } from "@/components/ui/button";
 import {
@@ -167,7 +169,7 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 max-w-6xl mx-auto">
             {scoreCategories.map((category, index) => (
               <div key={index} className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow">
                 <div className="flex items-center mb-4">
@@ -188,33 +190,21 @@ export default function Home() {
             ))}
           </div>
 
-          <div className="mt-12 text-center">
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700 max-w-4xl mx-auto">
+          <div id="grading-levels" className="mt-12 text-center">
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700 max-w-2xl mx-auto">
               <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
-                等第制評分系統 (A+ 到 F 共 11 級)
+                等第制評分系統
               </h3>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {[
-                  { grade: "A+", label: "卓越表現", color: "text-emerald-600" },
-                  { grade: "A", label: "優秀表現", color: "text-green-600" },
-                  { grade: "A-", label: "良好表現", color: "text-lime-600" },
-                  { grade: "B+", label: "滿意表現", color: "text-yellow-600" },
-                  { grade: "B", label: "尚可表現", color: "text-orange-600" },
-                  { grade: "B-", label: "合格表現", color: "text-orange-600" },
-                  { grade: "C+", label: "待改進", color: "text-red-500" },
-                  { grade: "C", label: "需改進", color: "text-red-600" },
-                  { grade: "C-", label: "需改進", color: "text-red-700" },
-                  { grade: "F", label: "不合格", color: "text-red-800" }
-                ].map((item, index) => (
-                  <div key={index} className="text-center">
-                    <div className={`text-lg font-bold ${item.color}`}>
-                      {item.grade}
-                    </div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400">
-                      {item.label}
-                    </div>
-                  </div>
-                ))}
+              <p className="text-gray-600 dark:text-gray-300 mb-4">
+                我們採用等第制評分，從 F 級到 A+ 級共 11 個層次，
+                為您的履歷提供精確的專業評估。
+              </p>
+              <div className="text-center">
+                <Link href="/help">
+                  <Button variant="link" className="">
+                    📊 查看詳細評分說明
+                  </Button>
+                </Link>
               </div>
             </div>
           </div>
