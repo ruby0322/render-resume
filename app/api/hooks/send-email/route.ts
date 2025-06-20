@@ -49,7 +49,7 @@ interface EmailData {
   token: string;
   token_hash: string;
   redirect_to: string;
-  email_action_type: 'signup' | 'login' | 'recovery' | 'invite' | 'email_change_current' | 'email_change_new';
+  email_action_type: 'signup' | 'login' | 'recovery' | 'invite' | 'email_change_current' | 'email_change_new' | 'waitlist_welcome';
   site_url: string;
   token_new: string;
   token_hash_new: string;

@@ -428,6 +428,108 @@ export const emailTemplates = {
       html: createBaseTemplate(content, '確認電子郵件變更'),
       text: `確認您的 RenderResume 電子郵件變更\n\n確認代碼：${data.token}\n\n或造訪：${data.redirectTo}\n\n此代碼將於 1 小時後過期。`
     };
+  },
+
+  waitlistWelcome: (data: EmailTemplateData): EmailTemplate => {
+    const content = `
+      <div class="header">
+        <div class="logo">🎯 Render Resume</div>
+        <h1>🎉 歡迎加入 Waitlist！</h1>
+        <p>您已成功加入我們的搶先體驗名單，讓我們一起創造更好的履歷體驗！</p>
+      </div>
+      
+      <div class="content">
+        <p style="font-size: 16px; margin-bottom: 20px;">
+          親愛的 ${data.userName || '您'}，您好！👋<br><br>
+          🎊 恭喜您成功加入 Render Resume 的 Waitlist！我們非常興奮能與您一起開啟 AI 履歷分析的全新體驗。
+        </p>
+        
+        <div style="background-color: #ecfeff; border-left: 4px solid ${BRAND_COLORS.primary}; padding: 20px; margin: 30px 0; border-radius: 0 8px 8px 0;">
+          <h3 style="color: ${BRAND_COLORS.primary}; margin-bottom: 15px;">🚀 您將獲得什麼？</h3>
+          <div style="color: ${BRAND_COLORS.text}; line-height: 1.8;">
+            ✨ <strong>六維度專業分析</strong> - 基於 Fortune 500 企業標準<br>
+            🎯 <strong>個人化改進建議</strong> - AI 驅動的精準優化<br>
+            📊 <strong>競爭力評分</strong> - 清楚了解您的優勢與改進空間<br>
+            🔄 <strong>即時更新</strong> - 隨時追蹤履歷優化進度<br>
+            💎 <strong>搶先體驗</strong> - 免費使用完整功能
+          </div>
+        </div>
+
+        <div style="background-color: #fffbeb; border-left: 4px solid ${BRAND_COLORS.warning}; padding: 20px; margin: 30px 0; border-radius: 0 8px 8px 0;">
+          <h3 style="color: ${BRAND_COLORS.warning}; margin-bottom: 10px;">⏰ 接下來會發生什麼？</h3>
+          <p style="margin: 0; color: ${BRAND_COLORS.text};">
+            我們會在 <strong>一個月內</strong> 發送您的專屬邀請碼，屆時您就可以：
+          </p>
+          <div style="margin: 10px 0 0 0; padding-left: 20px; color: ${BRAND_COLORS.text};">
+            1️⃣ 上傳您的履歷進行分析<br>
+            2️⃣ 獲得詳細的優化建議<br>
+            3️⃣ 下載改進後的專業版本
+          </div>
+        </div>
+
+        <div style="text-align: center; margin: 30px 0;">
+          <p style="margin: 20px 0; color: ${BRAND_COLORS.textLight};">
+            想了解更多？探索我們的功能介紹：
+          </p>
+          
+          <a href="${process.env.NEXT_PUBLIC_APP_URL}" class="cta-button">
+            🔍 探索更多功能
+          </a>
+        </div>
+
+        <div style="background-color: #ecfeff; border-left: 4px solid ${BRAND_COLORS.primary}; padding: 20px; margin: 30px 0; border-radius: 0 8px 8px 0;">
+          <h3 style="color: ${BRAND_COLORS.primary}; margin-bottom: 10px;">💡 小貼士</h3>
+          <div style="margin: 0; color: ${BRAND_COLORS.text};">
+            在等待期間，您可以：<br>
+            • 關注我們的<a href="${process.env.NEXT_PUBLIC_APP_URL}/blog" style="color: ${BRAND_COLORS.primary};">部落格</a>獲取履歷撰寫技巧<br>
+            • 瀏覽<a href="${process.env.NEXT_PUBLIC_APP_URL}/faq" style="color: ${BRAND_COLORS.primary};">常見問題</a>了解更多功能細節<br>
+            • 準備您想要分析的履歷文件（支援 PDF 格式）
+          </div>
+        </div>
+      </div>
+      
+      <div class="footer">
+        <p><strong>📧 聯絡資訊：</strong></p>
+        <p>
+          • 電子郵件：${data.userEmail}<br>
+          • 加入時間：${new Date().toLocaleDateString('zh-TW')}
+        </p>
+        <p style="margin-top: 20px;">
+          有任何問題嗎？回覆此電子郵件或造訪我們的 
+          <a href="${process.env.NEXT_PUBLIC_APP_URL}/support" style="color: ${BRAND_COLORS.primary};">支援中心</a>。我們很樂意為您提供協助！
+        </p>
+        <p style="margin-top: 15px; font-style: italic;">
+          感謝您對 Render Resume 的信任與支持！🙏
+        </p>
+      </div>
+    `;
+    
+    return {
+      subject: '🎉 歡迎加入 Render Resume Waitlist！搶先體驗 AI 履歷分析',
+      html: createBaseTemplate(content, '歡迎加入 Render Resume Waitlist'),
+      text: `🎉 歡迎加入 Render Resume Waitlist！
+
+親愛的 ${data.userName || '您'}，
+
+恭喜您成功加入 Render Resume 的 Waitlist！
+
+您將獲得：
+✨ 六維度專業分析 - 基於 Fortune 500 企業標準
+🎯 個人化改進建議 - AI 驅動的精準優化
+📊 競爭力評分 - 清楚了解您的優勢與改進空間
+🔄 即時更新 - 隨時追蹤履歷優化進度
+💎 搶先體驗 - 免費使用完整功能
+
+我們會在 一個月內 發送您的專屬邀請碼。
+
+探索更多功能：${process.env.NEXT_PUBLIC_APP_URL}
+
+聯絡資訊：
+• 電子郵件：${data.userEmail}
+• 加入時間：${new Date().toLocaleDateString('zh-TW')}
+
+感謝您對 Render Resume 的信任與支持！🙏`
+    };
   }
 };
 
@@ -478,13 +580,15 @@ export function getEmailTemplate(
     case 'email_change_current':
     case 'email_change_new':
       return emailTemplates.emailChange(data);
+    case 'waitlist_welcome':
+      return emailTemplates.waitlistWelcome(data);
     default:
       // Fallback template
       return {
-        subject: `Wiz Resume - Action Required`,
+        subject: `Render Resume - Action Required`,
         html: createBaseTemplate(`
           <div class="header">
-            <div class="logo">🎯 Wiz Resume</div>
+            <div class="logo">🎯 Render Resume</div>
             <h1>Action Required</h1>
           </div>
           <div class="content">
@@ -492,7 +596,7 @@ export function getEmailTemplate(
             <a href="${data.redirectTo}" class="cta-button">Continue</a>
           </div>
         `, 'Action Required'),
-        text: `Wiz Resume action required. Code: ${token}. Visit: ${data.redirectTo}`
+        text: `Render Resume action required. Code: ${token}. Visit: ${data.redirectTo}`
       };
   }
 }
@@ -515,6 +619,13 @@ export async function getReactEmailTemplate(
           token,
           redirectTo: redirectTo || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
           userName
+        });
+      }
+      case 'waitlist_welcome': {
+        const { WaitlistWelcomeEmailTemplate } = await import('@/components/emails/WaitlistWelcomeEmailTemplate');
+        return React.createElement(WaitlistWelcomeEmailTemplate, {
+          userName,
+          userEmail
         });
       }
       default:
