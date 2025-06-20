@@ -316,11 +316,11 @@ export function AnalysisScores({ scores }: AnalysisScoresProps) {
   };
 
   const getGradeComment = (grade: LetterGrade) => {
-    const displayName = user?.user_metadata.name;
-    if (['A+', 'A', 'A-'].includes(grade)) return `${displayName} 的履歷整體品質很不錯！`;   
-    if (['B+', 'B', 'B-'].includes(grade)) return `${displayName} 的履歷還有一些地方可以進一步優化`;
-    if (['C+', 'C', 'C-'].includes(grade)) return `${displayName} 的履歷需要進行較大程度的改進`;
-    return `${displayName} 的履歷品質嚴重不足，需要全面重新整理`;
+    const displayName = user?.user_metadata.name ? user?.user_metadata.name + ' ' : '您';
+    if (['A+', 'A', 'A-'].includes(grade)) return `${displayName}的履歷整體品質很不錯！`;   
+    if (['B+', 'B', 'B-'].includes(grade)) return `${displayName}的履歷還有一些地方可以進一步優化`;
+    if (['C+', 'C', 'C-'].includes(grade)) return `${displayName}的履歷需要進行較大程度的改進`;
+    return `${displayName}的履歷品質嚴重不足，需要全面重新整理`;
   };
 
   const getGradeColors = (grade: LetterGrade) => {

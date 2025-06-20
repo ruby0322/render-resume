@@ -35,6 +35,8 @@ export default function AnalyzePage() {
   const [uploadedFiles, setUploadedFiles] = useState<StoredFile[]>([]);
   const [additionalText, setAdditionalText] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analysisStartTime, setAnalysisStartTime] = useState<number | null>(null);
+  const [analysisElapsedTime, setAnalysisElapsedTime] = useState(0);
 
   const steps: { id: string; title: string; description: string; icon: React.ComponentType<{ className?: string }> }[] = [
     {
@@ -116,6 +118,8 @@ export default function AnalyzePage() {
     
     setIsAnalyzing(true);
     setError(null);
+    setAnalysisStartTime(Date.now());
+    setAnalysisElapsedTime(0);
     
     try {
       console.log('🔄 [Analyze Page] Converting base64 back to File objects');
@@ -190,9 +194,34 @@ export default function AnalyzePage() {
       setError(getErrorMessage(errorMessage));
     } finally {
       setIsAnalyzing(false);
+      setAnalysisStartTime(null);
       console.log('🏁 [Analyze Page] Analysis process completed');
     }
   }, [steps.length]);
+
+  // Timer effect to update elapsed time
+  useEffect(() => {
+    let intervalId: NodeJS.Timeout;
+    
+    if (isAnalyzing && analysisStartTime) {
+      intervalId = setInterval(() => {
+        setAnalysisElapsedTime(Math.floor((Date.now() - analysisStartTime) / 1000));
+      }, 1000);
+    }
+    
+    return () => {
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+    };
+  }, [isAnalyzing, analysisStartTime]);
+
+  // Format time display
+  const formatTime = (seconds: number): string => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
 
   useEffect(() => {
     console.log('🔍 [Analyze Page] Component mounted, checking for stored files');
@@ -256,6 +285,19 @@ export default function AnalyzePage() {
           <p className="text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
             AI正在深度分析您的作品內容，識別技能、成就和經驗。
           </p>
+          <div className="mt-4 space-y-2">
+            <p className="text-sm text-blue-600 dark:text-blue-400 font-medium">
+              通常平均分析時長是 45 秒左右，請耐心稍候，可以離開此頁面，但不可關閉
+            </p>
+            {isAnalyzing && (
+              <div className="flex items-center justify-center space-x-2 text-lg font-mono">
+                <span className="text-gray-700 dark:text-gray-300">分析時間：</span>
+                <span className="text-cyan-600 dark:text-cyan-400 font-bold">
+                  {formatTime(analysisElapsedTime)}
+                </span>
+              </div>
+            )}
+          </div>
           {uploadedFiles.length > 0 && (
             <p className="text-sm text-gray-500 mt-2">
               正在處理 {uploadedFiles.length} 個文件
