@@ -9,6 +9,7 @@ import {
   Eye,
   FileText,
   MessageSquare,
+  ScrollText,
   Shield,
   Star,
   Target,
@@ -122,16 +123,16 @@ export default function Home() {
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-8">
             <Link href="/auth/sign-up">
               <Button size="lg" className="bg-cyan-600 hover:bg-cyan-700 text-white px-8 py-3 text-lg">
-                🚀 加入 Waitlist
-                <Upload className="ml-2 h-5 w-5" />
+                加入 Waitlist
+                <ScrollText className="ml-2 h-5 w-5" />
               </Button>
             </Link>
-            <Link href="/auth/login">
+            {/* <Link href="/auth/login">
               <Button variant="outline" size="lg" className="px-8 py-3 text-lg border-cyan-200 text-cyan-700 hover:bg-cyan-50 dark:border-cyan-800 dark:text-cyan-300 dark:hover:bg-cyan-950">
                 已有帳戶？登入
                 <Eye className="ml-2 h-5 w-5" />
               </Button>
-            </Link>
+            </Link> */}
           </div>
 
           <div className="bg-cyan-50 dark:bg-cyan-950/30 border border-cyan-200 dark:border-cyan-800 rounded-lg p-4 mb-8">

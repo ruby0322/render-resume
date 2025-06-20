@@ -3,8 +3,7 @@
 import { LogoutRedirectHandler } from "@/components/logout-redirect-handler";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { FileText, Plus, Upload, User } from "lucide-react";
-import Link from "next/link";
+import { FileText, Plus, User } from "lucide-react";
 
 export function DashboardClient() {
   return (
@@ -13,8 +12,8 @@ export function DashboardClient() {
       
       {/* Quick Actions */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-        <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-          <Link href="/upload">
+        <Card className="transition-shadow cursor-pointer">
+          {/* <Link href="/upload"> */}
             <CardHeader>
               <div className="flex items-center space-x-2">
                 <Plus className="h-6 w-6 text-cyan-600" />
@@ -25,18 +24,20 @@ export function DashboardClient() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Button className="w-full bg-cyan-600 hover:bg-cyan-700">
-                開始創建
-                <Upload className="ml-2 h-4 w-4" />
+              {/* <Button disabled className="w-full bg-cyan-600 hover:bg-cyan-700"> */}
+              <Button disabled variant='outline' className="w-full">
+                {/* 開始創建 */}
+                即將推出
+                {/* <Upload className="ml-2 h-4 w-4" /> */}
               </Button>
             </CardContent>
-          </Link>
+          {/* </Link> */}
         </Card>
 
-        <Card className="hover:shadow-lg transition-shadow">
+        <Card className="transition-shadow">
           <CardHeader>
             <div className="flex items-center space-x-2">
-              <FileText className="h-6 w-6 text-gray-600" />
+              <FileText className="h-6 w-6 text-cyan-600" />
               <CardTitle className="text-lg">我的履歷</CardTitle>
             </div>
             <CardDescription>
@@ -50,10 +51,10 @@ export function DashboardClient() {
           </CardContent>
         </Card>
 
-        <Card className="hover:shadow-lg transition-shadow">
+        <Card className="transition-shadow">
           <CardHeader>
             <div className="flex items-center space-x-2">
-              <User className="h-6 w-6 text-gray-600" />
+              <User className="h-6 w-6 text-cyan-600" />
               <CardTitle className="text-lg">個人資料</CardTitle>
             </div>
             <CardDescription>
