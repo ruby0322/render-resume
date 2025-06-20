@@ -359,7 +359,7 @@ export default function Home() {
                 </div>
                 <div>
                   <TrendingUp className="h-8 w-8 mx-auto mb-2 text-yellow-300" />
-                  <div className="font-semibold">面試機率 +300%</div>
+                  <div className="font-semibold">面試機率 +N%</div>
                   <div className="text-sm opacity-80">實證效果</div>
                 </div>
               </div>
@@ -368,8 +368,8 @@ export default function Home() {
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               <Link href="/auth/sign-up">
                 <Button size="lg" className="bg-white text-cyan-600 hover:bg-gray-100 px-8 py-3 text-lg font-semibold">
-                  🚀 立即加入 Waitlist
-                  <Upload className="ml-2 h-5 w-5" />
+                  立即加入 Waitlist
+                  <ScrollText className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
               {/* <Link href="/auth/login">
