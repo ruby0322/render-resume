@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 export function LoginForm({
   className,
@@ -49,6 +50,12 @@ export function LoginForm({
       return () => clearTimeout(timer);
     }
   }, [isAuthenticated, redirectToDashboard]);
+
+  useEffect(() => {
+    if (error) {
+      toast(error);
+    }
+  }, [error]);
 
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();

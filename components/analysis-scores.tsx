@@ -301,10 +301,18 @@ export function AnalysisScores({ scores }: AnalysisScoresProps) {
   };
 
   const getGradeLevel = (grade: LetterGrade) => {
-    if (['A+', 'A', 'A-'].includes(grade)) return "優秀";
-    if (['B+', 'B', 'B-'].includes(grade)) return "良好";
-    if (['C+', 'C', 'C-'].includes(grade)) return "需要改進";
-    return "不合格";
+    return {
+      "A+": "卓越",
+      "A": "優秀",
+      "A-": "良好",
+      "B+": "滿意",
+      "B": "尚可",
+      "B-": "合格",
+      "C+": "待改進",
+      "C": "需改進",
+      "C-": "需改進",
+      "F": "不合格"
+    }[grade];
   };
 
   const getGradeComment = (grade: LetterGrade) => {
