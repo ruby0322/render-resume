@@ -3,10 +3,17 @@
 import { createClient } from "@/lib/supabase/client";
 import { AuthError, User } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+
+// Extended User type to include database user data
+interface ExtendedUser extends User {
+  display_name?: string;
+  avatar_url?: string;
+  email?: string;
+}
 
 interface AuthState {
-  user: User | null;
+  user: ExtendedUser | null;
   loading: boolean;
   error: string | null;
 }
@@ -20,6 +27,32 @@ export function useAuth() {
   const router = useRouter();
   const supabase = createClient();
 
+  // Function to sync user data with database
+  const syncUserData = useCallback(async (authUser: User): Promise<ExtendedUser> => {
+    try {
+      const response = await fetch('/api/users/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      
+      if (response.ok) {
+        const { user: dbUser } = await response.json();
+        return { 
+          ...authUser, 
+          display_name: dbUser.display_name,
+          avatar_url: dbUser.avatar_url,
+          email: dbUser.email
+        };
+      } else {
+        console.error('Failed to sync user data:', await response.text());
+        return authUser as ExtendedUser;
+      }
+    } catch (error) {
+      console.error('Error syncing user data:', error);
+      return authUser as ExtendedUser;
+    }
+  }, []);
+
   useEffect(() => {
     // 獲取初始認證狀態
     const getInitialSession = async () => {
@@ -27,11 +60,21 @@ export function useAuth() {
         const { data: { session }, error } = await supabase.auth.getSession();
         if (error) throw error;
         
-        setAuthState({
-          user: session?.user ?? null,
-          loading: false,
-          error: null,
-        });
+        if (session?.user) {
+          // Sync user data with database
+          const syncedUser = await syncUserData(session.user);
+          setAuthState({
+            user: syncedUser,
+            loading: false,
+            error: null,
+          });
+        } else {
+          setAuthState({
+            user: null,
+            loading: false,
+            error: null,
+          });
+        }
       } catch (error) {
         setAuthState({
           user: null,
@@ -48,11 +91,29 @@ export function useAuth() {
       async (event, session) => {
         console.log('🔐 [Auth] State changed:', event, session?.user?.email);
         
-        setAuthState({
-          user: session?.user ?? null,
-          loading: false,
-          error: null,
-        });
+        if (session?.user) {
+          // Sync user data with database for sign in events
+          if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+            const syncedUser = await syncUserData(session.user);
+            setAuthState({
+              user: syncedUser,
+              loading: false,
+              error: null,
+            });
+          } else {
+            setAuthState({
+              user: session.user as ExtendedUser,
+              loading: false,
+              error: null,
+            });
+          }
+        } else {
+          setAuthState({
+            user: null,
+            loading: false,
+            error: null,
+          });
+        }
         
         // 如果是新用戶註冊（包括 Google OAuth），發送歡迎郵件
         if (event === 'SIGNED_IN' && session?.user?.email) {
@@ -93,7 +154,7 @@ export function useAuth() {
     );
 
     return () => subscription.unsubscribe();
-  }, [supabase]);
+  }, [supabase, syncUserData]);
 
   // 電子郵件密碼登入
   const signInWithEmail = async (email: string, password: string) => {

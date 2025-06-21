@@ -2,11 +2,12 @@
 
 import { useAuth } from "@/components/hooks/use-auth";
 import { Button } from "@/components/ui/button";
-import { Menu, User, X } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { ThemeSwitcher } from "./theme-switcher";
+import { UserDropdown } from "./user-dropdown";
 
 const AppHeader = () => {
   const pathname = usePathname();
@@ -100,25 +101,7 @@ const AppHeader = () => {
             {loading ? (
               <div className="w-6 h-6 border-2 border-gray-300 border-t-cyan-600 rounded-full animate-spin"></div>
             ) : isAuthenticated && user ? (
-              <>
-                <div className="flex items-center space-x-2 min-w-0">
-                  <User className="h-4 w-4 text-gray-500 flex-shrink-0" />
-                  <span className="text-sm text-gray-700 dark:text-gray-300 hidden lg:inline truncate">
-                    {user.email}
-                  </span>
-                  <span className="text-sm text-gray-700 dark:text-gray-300 lg:hidden truncate">
-                    {user.email?.split('@')[0]}
-                  </span>
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleSignOut}
-                  className="border-gray-300 text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800 flex-shrink-0"
-                >
-                  登出
-                </Button>
-              </>
+              <UserDropdown />
             ) : (
               <div className="flex items-center space-x-2 flex-shrink-0">
                 <Button asChild size="sm" variant="outline">
@@ -180,11 +163,8 @@ const AppHeader = () => {
               </div>
             ) : isAuthenticated && user ? (
               <div className="space-y-4">
-                <div className="flex items-center space-x-2 px-2 min-w-0">
-                  <User className="h-4 w-4 text-gray-500 flex-shrink-0" />
-                  <span className="text-sm text-gray-700 dark:text-gray-300 truncate">
-                    {user.email}
-                  </span>
+                <div className="flex items-center space-x-3 px-2">
+                  <UserDropdown />
                 </div>
                 <Button
                   variant="outline"
